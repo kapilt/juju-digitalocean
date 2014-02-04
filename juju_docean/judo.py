@@ -13,7 +13,9 @@ License: GPL
 import argparse
 import dop
 import logging
+import subprocess
 import time
+import uuid
 import yaml
 
 
@@ -181,13 +183,7 @@ class MachineOp(object):
         raise NotImplementedError()
 
 
-class MachineRemove(MachineOp):
-
-    def run(self):
-        pass
-
-
-class MachineAdd(MachineOp):
+class OpMachineAdd(MachineOp):
 
     def run(self):
         droplet = self.docean.create_droplet(**self.params)
@@ -209,27 +205,20 @@ class MachineAdd(MachineOp):
                 return
             time.sleep(2)
 
-    def wait_on_machines(self, droplets):
-        event_map = dict([(d.event_id, d) for d in droplets])
-        while 1:
-            log.debug("Waiting on %s",
-                      ", ".join(d.name for d in event_map.values()))
-            event_ids = event_map.keys()
-            # Would be nice to scatter/gather here.
-            for evt_id in event_ids:
-                result = self.docean.request("/events/%s")
-                event = result['event']
-                if not event['event_type_id'] == 1:
-                    # umm.. we're only waiting on creates atm.
-                    raise ValueError(
-                        "Waiting on invalid event type: %d for %s",
-                        event['event_type_id'], event_map[event['id']].name)
-                elif event['action_status'] == 'done':
-                    log.debug("Machine %s ready", event_map[evt_id].name)
-                    event_map.pop(evt_id)
+
+class OpMachineRegister(OpMachineAdd):
+
+    def run(self):
+        droplet = super(OpMachineRegister, self).run()
+        self.run_juju(["juju", "add-machine", "root@%s" % droplet.ip_address])
+        return droplet
 
 
 class BaseCommand(object):
+
+    def __init__(self, config, docean):
+        self.config = config
+        self.docean = docean
 
     def solve_constraints(self, constraints):
         size, region = solve_constraints(self.constraints)
@@ -243,12 +232,13 @@ class BaseCommand(object):
 
         Notes this will lose comments and ordering in environments.yaml.
         """
-        with open(self.env_conf) as fh:
+        env_conf_path = self.config.get_env_conf()
+        with open(env_conf_path) as fh:
             conf = yaml.safe_load(fh.read())
-            env = conf['environments'][self.env_name]
+            env = conf['environments'][self.config.get_env_name()]
             env['bootstrap-host'] = ip_address
 
-        with open(self.env_conf, 'w') as fh:
+        with open(env_conf_path, 'w') as fh:
             fh.write(yaml.safe_dump(conf))
 
     def check_preconditions(self):
@@ -256,27 +246,31 @@ class BaseCommand(object):
         """
         keys = self.get_do_ssh_keys()
         if not keys:
-            raise ValueError(
+            raise ConfigError(
                 "SSH Public Key must be uploaded to digital ocean")
 
-        with open(self.env_conf) as fh:
+        env_name = self.config.get_env_name()
+        with open(self.config.get_env_conf()) as fh:
             conf = yaml.safe_load(fh.read())
             if not 'environments' in conf:
                 raise ConfigError(
                     "Invalid environments.yaml, no 'environments' section")
-            if not self.env_name in conf['environments']:
+            if not env_name in conf['environments']:
                 raise ConfigError(
-                    "Environment %r not in environments.yaml" % self.env_name)
-            env = conf['environments'][self.env_name]
-            if env['type'] != 'null':
+                    "Environment %r not in environments.yaml" % env_name)
+            env = conf['environments'][env_name]
+            if not env['type'] in ('null', 'manual'):
                 raise ConfigError(
                     "Environment %r provider type is %r must be 'null'" % (
-                        self.env_name, env['type']))
+                        env_name, env['type']))
             if env['bootstrap-host']:
                 raise ConfigError(
                     "Environment %r already has a bootstrap-host" % (
-                        self.env_name))
+                        env_name))
         return keys
+
+    def run_juju(self, command):
+        return subprocess.check_output(command)
 
 
 class Bootstrap(BaseCommand):
@@ -297,18 +291,18 @@ class Bootstrap(BaseCommand):
     def run(self):
         keys = self.check_preconditions()
         image, size, region = self.solve_constraints()
-        log.debug("Launching droplet")
+        log.debug("Launching bootstrap host")
         params = dict(
             name="%s-0" % self.env_name, image_id=image,
             size_id=size, region_id=region, ssh_key_ids=keys,
             virtio=True, private_networking=True)
 
-        op = MachineOp(self.docean, params)
+        op = OpMachineAdd(self.docean, params)
         droplet = op.run()
 
-        log.debug("Updating environment bootstrap host")
+        log.info("Updating environment bootstrap host")
         self.update_bootstrap_host(droplet.ip_address)
-        self.juju(["bootstrap", "-e", self.env_name])
+        self.run_juju(["bootstrap", "-e", self.env_name])
 
 
 class AddMachine(BaseCommand):
@@ -316,18 +310,38 @@ class AddMachine(BaseCommand):
     def run(self, options):
         keys = self.check_preconditions()
         image, size, region = solve_constraints(options.constraints)
+        log.debug("Launching droplets")
+
+        params = dict(
+            image_id=image, size_id=size, region_id=region, ssh_key_ids=keys,
+            virtio=True, private_networking=True)
+
+        for n in range(self.config.num_machines):
+            params['name'] = "%s-%s" % (uuid.uuid4().hex)
+            self.queue_op(OpMachineRegister(self.client, **params))
+
+        for n in range(self.config.num_machines):
+            droplet, machine_id = self.gather_result()
+            log.info("Registered %s as machine %s",
+                     droplet.ip_address, machine_id)
 
 
 class TerminateMachine(BaseCommand):
 
     def run(self, options):
-        pass
+        """
+        """
+        self.check_preconditions()
+        env_name = self.config.get_env_name()
+        droplets = [d for d in self.docean.show_active_droplets() \
+                    if d.name.startswith(env_name)]
 
 
 class DestroyEnvironment(BaseCommand):
 
     def run(options):
-        pass
+        """
+        """
 
 
 class Config(object):
@@ -335,7 +349,7 @@ class Config(object):
     def __init__(self, options):
         self.options = options
 
-    def connect_docean(options):
+    def connect_docean():
         pass
 
 
@@ -367,12 +381,14 @@ def setup_parser():
         help="Bootstrap an environment")
     _default_opts(bootstrap)
     _machine_opts(bootstrap)
+    bootstrap.setdefaults('bootstrap', Bootstrap)
 
     add_machine = subparsers.add_parser(
         'add-machine',
         help="Add machines to an environment")
     _default_opts(add_machine)
     _machine_opts(add_machine)
+    add_machine.setdefaults('commands', AddMachine)
 
     terminate_machine = subparsers.add_parser(
         "terminate-machine",
@@ -391,7 +407,8 @@ def main():
     parser = setup_parser()
     options = parser.parse_args()
     config = Config(options)
-    options.command(config)
+    docean = config.connect_docean()
+    options.command(config, docean)
 
 
 if __name__ == '__main__':
