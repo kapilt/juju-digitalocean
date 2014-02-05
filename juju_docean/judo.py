@@ -214,6 +214,14 @@ class OpMachineRegister(OpMachineAdd):
         return droplet
 
 
+class OpMachineDestroy(MachineOp):
+
+    def run(self):
+        self.run_juju([
+            "juju", "terminate-machine", "--force", self.params['machine_id']])
+        self.docean.destroy_droplet(self.params['instance_id'])
+
+
 class BaseCommand(object):
 
     def __init__(self, config, docean):
@@ -329,19 +337,58 @@ class AddMachine(BaseCommand):
 class TerminateMachine(BaseCommand):
 
     def run(self, options):
-        """
+        """Terminate machine in environment.
         """
         self.check_preconditions()
-        env_name = self.config.get_env_name()
-        droplets = [d for d in self.docean.show_active_droplets() \
-                    if d.name.startswith(env_name)]
+
+        status = self.environ.status()
+        machines = status.get('Machines', {})
+
+        remove = []
+        for m in machines:
+            if m in options.machines:
+                remove.append(
+                    {'instance_id': machines[m]['InstanceId'],
+                     'machine_id': m})
+        droplets = [d.id for d in self.docean.show_all_active_droplets()]
+
+        def remove_filter(m):
+            m['instance_id'] in droplets
+
+        remove = filter(remove_filter,  remove)
+        map(self.queue_op, map(remove, OpMachineDestroy))
+        for r in remove:
+            self.gather_result()
 
 
 class DestroyEnvironment(BaseCommand):
 
-    def run(options):
+    def run(self, options):
+        """Destroy environment.
         """
-        """
+        self.check_preconditions()
+
+        status = self.environ.status()
+        machines = status.get('Machines', {})
+
+        remove = []
+        for m in machines:
+            if m == '0':
+                continue
+            remove.append(
+                {'instance_id': machines[m]['InstanceId'],
+                 'machine_id': m})
+        droplets = [d.id for d in self.docean.show_all_active_droplets()]
+
+        def remove_filter(m):
+            m['instance_id'] in droplets
+
+        remove = filter(remove_filter,  remove)
+        map(self.queue_op, map(remove, OpMachineDestroy))
+        for r in remove:
+            self.gather_result()
+        self.run_juju([
+            'juju', 'destroy-environment', '-y', self.config.get_env_name()])
 
 
 class Config(object):
@@ -350,7 +397,20 @@ class Config(object):
         self.options = options
 
     def connect_docean():
-        pass
+        """Connect to digital ocean.
+        """
+
+    def connect_environment():
+        """Return a websocket connection to the environment.
+        """
+
+    def get_env_name():
+        """Get the environment name.
+        """
+
+    def get_env_conf():
+        """Get the environment config file.
+        """
 
 
 def _default_opts(parser):
@@ -393,6 +453,7 @@ def setup_parser():
     terminate_machine = subparsers.add_parser(
         "terminate-machine",
         help="Terminate machine")
+    terminate_machine.add_argument("machines", nargs="1+")
     _default_opts(terminate_machine)
 
     terminate_environment = subparsers.add_parser(
