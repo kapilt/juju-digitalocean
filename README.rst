@@ -82,10 +82,9 @@ a null provider enviroment to 'environments.yaml', for example::
 
  environments:
    digitalocean:
-      type: "null"
+      type: manual
       bootstrap-host: null
       bootstrap-user: root
-      storage-auth-key: fa32204f792c74a7a29ab59ac3ce3226
 
 **Note** this client provider plugin needs to dynamically write out
   the environments.yaml file when bootstrapping to update the
@@ -93,6 +92,8 @@ a null provider enviroment to 'environments.yaml', for example::
   comments in the yaml file. A workaround to preserve existing
   comments is to define the JUJU_HOME environment variable to point to
   a non-default directory when using this plugin.
+
+TODO: automatically set JUJU_HOME and inform user.
 
 Usage
 =====
