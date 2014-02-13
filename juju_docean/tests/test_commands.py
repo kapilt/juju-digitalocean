@@ -1,6 +1,5 @@
 import mock
 import os
-import shutil
 import tempfile
 import unittest
 import yaml
@@ -8,51 +7,11 @@ import yaml
 from dop import client as dop
 
 
-from judo import (
-    solve_constraints,
-    BaseCommand,
-    ConfigError)
+from juju_docean.commands import BaseCommand, ConfigError
+from juju_docean.tests.base import Base
 
 
-class Base(unittest.TestCase):
-    def mkdir(self):
-        d = tempfile.mkdtemp()
-        self.addCleanup(shutil.rmtree, d)
-        return d
-
-    def change_environment(self, **kw):
-        """
-        """
-        original_environ = dict(os.environ)
-
-        @self.addCleanup
-        def cleanup_env():
-            os.environ.clear()
-            os.environ.update(original_environ)
-
-        os.environ.update(kw)
-
-
-class ConfigTest(unittest.TestCase):
-    pass
-
-
-class ConstraintTests(unittest.TestCase):
-
-    cases = [
-        ("region=nyc, cpu-cores=4, mem=2", (65, 1)),
-        ("region=ams, root-disk=100G", (61, 5)),
-        ("region=nyc2, mem=24G", (60, 4)),
-        ("", (66, 4))]
-
-    def test_constraint_solving(self):
-        for constraints, solution in self.cases:
-            self.assertEqual(
-                solve_constraints(constraints),
-                solution)
-
-
-class BaseCommandTest(unittest.TestCase):
+class BaseCommandTest(Base):
 
     def setUp(self):
         self.config = mock.MagicMock()
@@ -131,19 +90,20 @@ class BaseCommandTest(unittest.TestCase):
             self.assertIn(
                 "Environment 'docean' not in environments.yaml", str(e))
 
-    def xtest_run_juju(self):
-        pass
 
-
-class BootstrapTest(unittest.TestCase):
+class BootstrapTest(Base):
     pass
 
 
-class AddMachineTest(unittest.TestCase):
+class AddMachineTest(Base):
     pass
 
 
-class TerminateMachineTest(unittest.TestCase):
+class TerminateMachineTest(Base):
+    pass
+
+
+class DestroyEnvironmentTest(Base):
     pass
 
 

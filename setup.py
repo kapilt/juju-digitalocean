@@ -13,7 +13,7 @@ setup(name='juju-docean',
       url='http://github/kapilt/juju-docean',
       license='BSD',
       packages=find_packages(),
-      install_requires=["jujuclient", "PyYAML", "dop"],
+      install_requires=["PyYAML", "dop", "requests"],
       entry_points={
           "console_scripts": [
               'juju-docean = juju_docean.cli:main']},
