@@ -6,27 +6,28 @@ import yaml
 
 from dop import client as dop
 
+from juju_docean.commands import (
+    BaseCommand,
+    Bootstrap,
+    AddMachine,
+    TerminateMachine,
+    DestroyEnvironment
+    )
 
-from juju_docean.commands import BaseCommand, ConfigError
+from juju_docean.exceptions import ConfigError
 from juju_docean.tests.base import Base
 
 
-class BaseCommandTest(Base):
+class CommandBase(Base):
 
     def setUp(self):
         self.config = mock.MagicMock()
         self.provider = mock.MagicMock()
-        self.cmd = BaseCommand(self.config, self.provider)
-
-    def test_get_ssh_keys(self):
-        self.provider.get_ssh_keys.return_value = [
-            dop.SSHKey(1, 'abc'), dop.SSHKey(32, 'bcd')]
-        self.assertEqual(
-            self.cmd.get_do_ssh_keys(),
-            [1, 32])
+        self.env = mock.MagicMock()
 
     def setup_env(self, conf=None):
         self.provider.get_ssh_keys.return_value = [dop.SSHKey(1, 'abc')]
+        self.config.series = "precise"
         with tempfile.NamedTemporaryFile(delete=False) as f:
             self.config.get_env_conf.return_value = f.name
             self.config.get_env_name.return_value = 'docean'
@@ -40,12 +41,19 @@ class BaseCommandTest(Base):
             f.flush()
             self.addCleanup(lambda: os.remove(f.name))
 
-    def test_update_bootstrap_host(self):
-        self.setup_env()
-        self.cmd.update_bootstrap_host('1.1.1.1')
-        with open(self.config.get_env_conf()) as f:
-            conf = yaml.safe_load(f.read())['environments']['docean']
-        self.assertEqual(conf['bootstrap-host'], '1.1.1.1')
+
+class BaseCommandTest(CommandBase):
+
+    def setUp(self):
+        super(BaseCommandTest, self).setUp()
+        self.cmd = BaseCommand(self.config, self.provider, self.env)
+
+    def test_get_ssh_keys(self):
+        self.provider.get_ssh_keys.return_value = [
+            dop.SSHKey(1, 'abc'), dop.SSHKey(32, 'bcd')]
+        self.assertEqual(
+            self.cmd.get_do_ssh_keys(),
+            [1, 32])
 
     def test_check_preconditions_okay(self):
         self.setup_env()
@@ -91,21 +99,91 @@ class BaseCommandTest(Base):
                 "Environment 'docean' not in environments.yaml", str(e))
 
 
-class BootstrapTest(Base):
-    pass
+class BootstrapTest(CommandBase):
+
+    def setUp(self):
+        super(BootstrapTest, self).setUp()
+        self.cmd = Bootstrap(self.config, self.provider, self.env)
+
+    def test_update_bootstrap_host(self):
+        self.setup_env()
+        self.cmd.update_bootstrap_host('1.1.1.1')
+        with open(self.config.get_env_conf()) as f:
+            conf = yaml.safe_load(f.read())['environments']['docean']
+        self.assertEqual(conf['bootstrap-host'], '1.1.1.1')
+
+    def test_bootstrap(self):
+        self.setup_env()
+        self.config.series = "precise"
+        self.provider.get_instance.return_value = dop.Droplet.from_json(dict(
+            id=2121,
+            name='docean-13290123j13',
+            ip_address="10.0.2.1"))
+        self.cmd.run()
+
+    # TODO
+    # test existing named host
 
 
-class AddMachineTest(Base):
-    pass
+class AddMachineTest(CommandBase):
+
+    def setUp(self):
+        super(AddMachineTest, self).setUp()
+        self.cmd = AddMachine(self.config, self.provider, self.env)
+
+    def test_add_machine(self):
+        self.setup_env()
+        self.cmd.run()
 
 
-class TerminateMachineTest(Base):
-    pass
+class TerminateMachineTest(CommandBase):
+
+    def setUp(self):
+        super(TerminateMachineTest, self).setUp()
+        self.cmd = TerminateMachine(self.config, self.provider, self.env)
+
+    def test_terminate_machine(self):
+        self.setup_env()
+        self.env.status.return_value = {
+            'machines': {
+                '1': {
+                    'dns-name': '10.0.1.23',
+                    'instance-id': 'manual:ip_address'}
+            }}
+        self.provider.get_instances.return_value = [
+            dop.Droplet.from_json(dict(
+                id=221, name="docean-123123", ip_address="10.0.1.23")),
+            dop.Droplet.from_json(dict(
+                id=258, name="docena-209123", ip_address="10.0.1.103"))]
+        self.config.options.machines = ["1"]
+        self.cmd.run()
+        self.provider.terminate_instance.assert_called_once_with(221)
 
 
-class DestroyEnvironmentTest(Base):
-    pass
+class DestroyEnvironmentTest(CommandBase):
 
+    def setUp(self):
+        super(DestroyEnvironmentTest, self).setUp()
+        self.cmd = DestroyEnvironment(self.config, self.provider, self.env)
+
+    def test_destroy_environment(self):
+        self.setup_env()
+        self.env.status.return_value = {
+            'machines': {
+                '0': {
+                    'dns-name': '10.0.1.23',
+                    'instance-id': 'manual:ip_address'},
+                '1': {
+                    'dns-name': '10.0.1.25',
+                    'instance-id': 'manual:ip_address'}
+            }}
+        self.provider.get_instances.return_value = [
+            dop.Droplet.from_json(dict(
+                id=221, name="docean-123123", ip_address="10.0.1.23")),
+            dop.Droplet.from_json(dict(
+                id=258, name="docena-209123", ip_address="10.0.1.25"))]
+        self.cmd.run()
+        self.provider.terminate_instance.assert_called_once_with(258)
 
 if __name__ == '__main__':
     unittest.main()

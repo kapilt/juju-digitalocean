@@ -5,8 +5,9 @@ log = logging.getLogger("juju.docean")
 
 class MachineOp(object):
 
-    def __init__(self, provider, params):
+    def __init__(self, provider, env, params):
         self.provider = provider
+        self.env = env
         self.params = params
 
     def run(self):
@@ -18,7 +19,7 @@ class MachineAdd(MachineOp):
     def run(self):
         instance = self.provider.create_instance(**self.params)
         self.provider.wait_on(instance)
-        self.provider.get_instance(instance.id)
+        return self.provider.get_instance(instance.id)
 
 
 class MachineRegister(MachineAdd):

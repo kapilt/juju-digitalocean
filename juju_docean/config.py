@@ -22,6 +22,14 @@ class Config(object):
         return Environment(self)
 
     @property
+    def constraints(self):
+        return self.options.constraints
+
+    @property
+    def series(self):
+        return self.options.series
+
+    @property
     def juju_home(self):
         return os.path.expanduser(
             os.environ.get("JUJU_HOME", "~/.juju"))

@@ -60,8 +60,10 @@ def main():
     parser = setup_parser()
     options = parser.parse_args()
     config = Config(options)
-    docean = config.connect_docean()
-    options.command(config, docean)
+    options.command(
+        config,
+        config.connect_provider(),
+        config.connect_environment())
 
 
 if __name__ == '__main__':

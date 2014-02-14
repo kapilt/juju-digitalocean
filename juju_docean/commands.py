@@ -2,39 +2,29 @@ import logging
 import uuid
 import yaml
 
-from constraints import IMAGE_MAP, solve_constraints
-from exceptions import ConfigError
-import ops
+from juju_docean.constraints import IMAGE_MAP, solve_constraints
+from juju_docean.exceptions import ConfigError
+from juju_docean import ops
+from juju_docean.runner import Runner
+
 
 log = logging.getLogger("juju.docean")
 
 
 class BaseCommand(object):
 
-    def __init__(self, config, provider):
+    def __init__(self, config, provider, environment):
         self.config = config
         self.provider = provider
+        self.env = environment
+        self.runner = Runner()
 
-    def solve_constraints(self, constraints):
-        size, region = solve_constraints(self.constraints)
-        return IMAGE_MAP[self.series], size, region
+    def solve_constraints(self):
+        size, region = solve_constraints(self.config.constraints)
+        return IMAGE_MAP[self.config.series], size, region
 
     def get_do_ssh_keys(self):
         return [k.id for k in self.provider.get_ssh_keys()]
-
-    def update_bootstrap_host(self, ip_address):
-        """Update bootstrap-host in named null provider environment.
-
-        Notes this will lose comments and ordering in environments.yaml.
-        """
-        env_conf_path = self.config.get_env_conf()
-        with open(env_conf_path) as fh:
-            conf = yaml.safe_load(fh.read())
-            env = conf['environments'][self.config.get_env_name()]
-            env['bootstrap-host'] = ip_address
-
-        with open(env_conf_path, 'w') as fh:
-            fh.write(yaml.safe_dump(conf))
 
     def check_preconditions(self):
         """Check for provider ssh key, and configured environments.yaml.
@@ -85,88 +75,104 @@ class Bootstrap(BaseCommand):
         image, size, region = self.solve_constraints()
         log.debug("Launching bootstrap host")
         params = dict(
-            name="%s-0" % self.env_name, image_id=image,
+            name="%s-0" % self.config.get_env_name(), image_id=image,
             size_id=size, region_id=region, ssh_key_ids=keys)
 
-        op = ops.MachineAdd(self.provider, params)
+        op = ops.MachineAdd(self.provider, self.env, params)
         instance = op.run()
 
         log.info("Updating environment bootstrap host")
         self.update_bootstrap_host(instance.ip_address)
         self.env.bootstrap()
 
+    def update_bootstrap_host(self, ip_address):
+        """Update bootstrap-host in named null provider environment.
+
+        Notes this will lose comments and ordering in environments.yaml.
+        """
+        env_conf_path = self.config.get_env_conf()
+        with open(env_conf_path) as fh:
+            conf = yaml.safe_load(fh.read())
+            env = conf['environments'][self.config.get_env_name()]
+            env['bootstrap-host'] = ip_address
+
+        with open(env_conf_path, 'w') as fh:
+            fh.write(yaml.safe_dump(conf))
+
 
 class AddMachine(BaseCommand):
 
-    def run(self, options):
+    def run(self):
         keys = self.check_preconditions()
-        image, size, region = solve_constraints(options.constraints)
+        image, size, region = self.solve_constraints()
         log.debug("Launching instances")
 
         params = dict(
             image_id=image, size_id=size, region_id=region, ssh_key_ids=keys)
 
         for n in range(self.config.num_machines):
-            params['name'] = "%s-%s" % (uuid.uuid4().hex)
-            self.queue_op(ops.MachineRegister(self.client, **params))
+            params['name'] = "%s-%s" % (
+                self.config.get_env_name(), uuid.uuid4().hex)
+            self.runner.queue_op(ops.MachineRegister(
+                self.provider, self.env, params))
 
-        for (instance, machine_id) in self.iter_results():
-            instance, machine_id = self.gather_result()
+        for (instance, machine_id) in self.runner.iter_results():
             log.info("Registered %s as machine %s",
                      instance.ip_address, machine_id)
 
 
 class TerminateMachine(BaseCommand):
 
-    def run(self, options):
+    def run(self):
         """Terminate machine in environment.
         """
         self.check_preconditions()
+        self._terminate_machines(lambda x: x in self.config.options.machines)
 
-        status = self.environ.status()
-        machines = status.get('Machines', {})
+    def _terminate_machines(self, remove_machines):
+        status = self.env.status()
+        machines = status.get('machines', {})
 
+        # Using the api instance-id can be the provider id, but
+        # else it defaults to ip, and we have to disambiguate.
         remove = []
         for m in machines:
-            if m in options.machines:
+            if remove_machines(m):
                 remove.append(
-                    {'instance_id': machines[m]['InstanceId'],
+                    {'address': machines[m]['dns-name'],
+                     'instance_id': machines[m]['instance-id'],
                      'machine_id': m})
-        droplets = [d.id for d in self.provider.get_instances()]
 
-        def remove_filter(m):
-            m['instance_id'] in droplets
+        address_map = dict([(d.ip_address, d.id) for
+                            d in self.provider.get_instances()])
+        for m in remove:
+            instance_id = address_map.get(m['address'])
+            if instance_id is None:
+                log.warning(
+                    "Couldn't resolve machine %s's address %s to instance" % (
+                        m['machine_id'], m['address']))
+                continue
+            self.runner.queue_op(
+                ops.MachineDestroy(
+                    self.provider, self.env, {
+                        'machine_id': m['machine_id'],
+                        'instance_id': instance_id}))
+        for result in self.runner.iter_results():
+            pass
 
-        remove = filter(remove_filter,  remove)
-        map(self.queue_op, map(remove, ops.MachineDestroy))
-        for r in remove:
-            self.gather_result()
 
+class DestroyEnvironment(TerminateMachine):
 
-class DestroyEnvironment(BaseCommand):
-
-    def run(self, options):
+    def run(self):
         """Destroy environment.
         """
         self.check_preconditions()
 
-        status = self.environ.status()
-        machines = status.get('Machines', {})
+        # Manual provider needs machines removed prior to env destroy.
+        def state_service_filter(m):
+            if m == "0":
+                return False
+            return True
+        self._terminate_machines(state_service_filter)
 
-        remove = []
-        for m in machines:
-            if m == '0':
-                continue
-            remove.append(
-                {'instance_id': machines[m]['InstanceId'],
-                 'machine_id': m})
-        instances = [d.id for d in self.provider.get_instances()]
-
-        def remove_filter(m):
-            m['instance_id'] in instances
-
-        remove = filter(remove_filter,  remove)
-        map(self.queue_op, map(remove, ops.MachineDestroy))
-        for i in self.iter_results():
-            pass
         self.env.destroy_environment()

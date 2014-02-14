@@ -57,8 +57,6 @@ class DigitalOcean(object):
             params['private_networking'] = True
 
     def terminate_instance(self, instance_id):
-        self.run_juju([
-            "juju", "terminate-machine", "--force", self.params['machine_id']])
         self.client.destroy_droplet(self.params['instance_id'])
 
     def wait_on(self, instance):

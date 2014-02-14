@@ -23,6 +23,7 @@ class RunnerTest(Base):
         runner.queue_op(FakeOp())
         results = list(runner.iter_results())
         self.assertEqual(results, [1, 1])
+        self.assertFalse(runner.started)
 
     def test_runner(self):
         runner = Runner()
