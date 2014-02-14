@@ -82,8 +82,7 @@ class Bootstrap(BaseCommand):
         instance = op.run()
 
         log.info("Updating environment bootstrap host")
-        self.update_bootstrap_host(instance.ip_address)
-        self.env.bootstrap()
+        self.env.bootstrap_jenv(instance.ip_address)
 
     def check_preconditions(self):
         return super(Bootstrap, self).check_preconditions()

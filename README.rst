@@ -86,15 +86,6 @@ a null provider enviroment to 'environments.yaml', for example::
       bootstrap-host: null
       bootstrap-user: root
 
-**Note** this client provider plugin needs to dynamically write out
-  the environments.yaml file when bootstrapping to update the
-  bootstrap-host value to the allocated machine. This will strip
-  comments in the yaml file. A workaround to preserve existing
-  comments is to define the JUJU_HOME environment variable to point to
-  a non-default directory when using this plugin.
-
-TODO: automatically set JUJU_HOME and inform user.
-
 Usage
 =====
 

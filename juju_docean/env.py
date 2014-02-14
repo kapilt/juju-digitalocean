@@ -38,24 +38,26 @@ class Environment(object):
         Manual provider config keeps transient state in the form of
         bootstrap-host for its config.
 
-        A temporary JUJU_HOME is used to modify
+        A temporary JUJU_HOME is used to modify things.
         """
         env_name = self.config.get_env_name()
 
         # Prep a new juju home
         boot_home = os.path.join(
             self.config.juju_home, "boot-%s" % env_name)
-        os.mkdir(boot_home)
-        shutil.copy(self.config.juju_home)
+        os.makedirs(os.path.join(boot_home, 'environments'))
+        shutil.copytree(
+            os.path.join(self.config.juju_home, 'ssh'),
+            os.path.join(boot_home, 'ssh'))
 
         # Updated env config with the bootstrap host.
-        with open(self.get_env_conf()) as fh:
+        with open(self.config.get_env_conf()) as fh:
             data = yaml.safe_load(fh.read())
             env_conf = data['environments'].get(env_name)
         env_conf['bootstrap-host'] = host
         with open(os.path.join(
                 boot_home, 'environments.yaml'), 'w') as fh:
-            fh.write({'environments': env_conf})
+            fh.write(yaml.safe_dump({'environments': {env_name: env_conf}}))
 
         # Change JUJU_ENV
         env = dict(os.environ)
@@ -63,7 +65,7 @@ class Environment(object):
         self._run(['bootstrap', '-v'], env=env)
 
         # Copy over the jenv
-        shutil.copystat(
+        shutil.copy(
             os.path.join(
                 boot_home, "environments", "%s.jenv" % env_name),
             os.path.join(

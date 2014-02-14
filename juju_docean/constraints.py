@@ -1,4 +1,4 @@
-from exceptions import ConstraintError
+from juju_docean.exceptions import ConstraintError
 
 # Record sizes so we can offer constraints around disk, cpu and transfer,
 # The v1 api only gives a name (based on ram size) and id.

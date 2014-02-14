@@ -1,9 +1,9 @@
 import os
 import yaml
 
-from env import Environment
-from exceptions import ConfigError
-from provider import factory
+from juju_docean.env import Environment
+from juju_docean.exceptions import ConfigError
+from juju_docean.provider import factory
 
 
 class Config(object):
