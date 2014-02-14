@@ -18,6 +18,11 @@ class Environment(object):
     def add_machine(self, location):
         return self._run(['add-machine', location])
 
+    def terminate_machines(self, machines):
+        cmd = ['terminate-machine', '--force']
+        cmd.extend(machines)
+        return self._run(cmd)
+
     def bootstrap(self):
         return self._run(['bootstrap', '-v'])
 

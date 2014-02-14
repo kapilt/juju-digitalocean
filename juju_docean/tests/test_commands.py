@@ -15,18 +15,18 @@ class BaseCommandTest(Base):
 
     def setUp(self):
         self.config = mock.MagicMock()
-        self.docean = mock.MagicMock()
-        self.cmd = BaseCommand(self.config, self.docean)
+        self.provider = mock.MagicMock()
+        self.cmd = BaseCommand(self.config, self.provider)
 
     def test_get_ssh_keys(self):
-        self.docean.all_ssh_keys.return_value = [
+        self.provider.get_ssh_keys.return_value = [
             dop.SSHKey(1, 'abc'), dop.SSHKey(32, 'bcd')]
         self.assertEqual(
             self.cmd.get_do_ssh_keys(),
             [1, 32])
 
     def setup_env(self, conf=None):
-        self.docean.all_ssh_keys.return_value = [dop.SSHKey(1, 'abc')]
+        self.provider.get_ssh_keys.return_value = [dop.SSHKey(1, 'abc')]
         with tempfile.NamedTemporaryFile(delete=False) as f:
             self.config.get_env_conf.return_value = f.name
             self.config.get_env_name.return_value = 'docean'

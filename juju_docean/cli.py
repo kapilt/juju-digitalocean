@@ -25,33 +25,33 @@ def _machine_opts(parser):
 def setup_parser():
     parser = argparse.ArgumentParser(description="Juju Digital Ocean Plugin")
 
-    subparsers = parser.add_subparser()
+    subparsers = parser.add_subparsers()
     bootstrap = subparsers.add_parser(
         'bootstrap',
         help="Bootstrap an environment")
     _default_opts(bootstrap)
     _machine_opts(bootstrap)
-    bootstrap.setdefaults('command', commands.Bootstrap)
+    bootstrap.set_defaults({'command': commands.Bootstrap})
 
     add_machine = subparsers.add_parser(
         'add-machine',
         help="Add machines to an environment")
     _default_opts(add_machine)
     _machine_opts(add_machine)
-    add_machine.setdefaults('command', commands.AddMachine)
+    add_machine.set_defaults({'command': commands.AddMachine})
 
     terminate_machine = subparsers.add_parser(
         "terminate-machine",
         help="Terminate machine")
     terminate_machine.add_argument("machines", nargs="1+")
     _default_opts(terminate_machine)
-    terminate_machine.setdefaults('command', commands.TerminateMachine)
+    terminate_machine.set_defaults({'command': commands.TerminateMachine})
 
     destroy_environment = subparsers.add_parser(
         'destroy-environment',
         help="Destroy all machines in juju environment")
     _default_opts(destroy_environment)
-    destroy_environment.setdefaults('command', commands.DestroyEnvironment)
+    destroy_environment.set_defaults({'command': commands.DestroyEnvironment})
 
     return parser
 

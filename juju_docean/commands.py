@@ -20,7 +20,7 @@ class BaseCommand(object):
         return IMAGE_MAP[self.series], size, region
 
     def get_do_ssh_keys(self):
-        return [k.id for k in self.provider.all_ssh_keys()]
+        return [k.id for k in self.provider.get_ssh_keys()]
 
     def update_bootstrap_host(self, ip_address):
         """Update bootstrap-host in named null provider environment.
@@ -86,14 +86,13 @@ class Bootstrap(BaseCommand):
         log.debug("Launching bootstrap host")
         params = dict(
             name="%s-0" % self.env_name, image_id=image,
-            size_id=size, region_id=region, ssh_key_ids=keys,
-            virtio=True, private_networking=True)
+            size_id=size, region_id=region, ssh_key_ids=keys)
 
         op = ops.MachineAdd(self.provider, params)
-        droplet = op.run()
+        instance = op.run()
 
         log.info("Updating environment bootstrap host")
-        self.update_bootstrap_host(droplet.ip_address)
+        self.update_bootstrap_host(instance.ip_address)
         self.env.bootstrap()
 
 
@@ -105,14 +104,13 @@ class AddMachine(BaseCommand):
         log.debug("Launching instances")
 
         params = dict(
-            image_id=image, size_id=size, region_id=region, ssh_key_ids=keys,
-            virtio=True, private_networking=True)
+            image_id=image, size_id=size, region_id=region, ssh_key_ids=keys)
 
         for n in range(self.config.num_machines):
             params['name'] = "%s-%s" % (uuid.uuid4().hex)
             self.queue_op(ops.MachineRegister(self.client, **params))
 
-        for n in range(self.config.num_machines):
+        for (instance, machine_id) in self.iter_results():
             instance, machine_id = self.gather_result()
             log.info("Registered %s as machine %s",
                      instance.ip_address, machine_id)
@@ -134,7 +132,7 @@ class TerminateMachine(BaseCommand):
                 remove.append(
                     {'instance_id': machines[m]['InstanceId'],
                      'machine_id': m})
-        droplets = [d.id for d in self.provider.show_all_active_droplets()]
+        droplets = [d.id for d in self.provider.get_instances()]
 
         def remove_filter(m):
             m['instance_id'] in droplets
@@ -169,6 +167,6 @@ class DestroyEnvironment(BaseCommand):
 
         remove = filter(remove_filter,  remove)
         map(self.queue_op, map(remove, ops.MachineDestroy))
-        for r in remove:
-            self.gather_result()
+        for i in self.iter_results():
+            pass
         self.env.destroy_environment()

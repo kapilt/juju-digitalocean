@@ -1,7 +1,7 @@
 import os
 import yaml
 
-from environment import Environment
+from env import Environment
 from exceptions import ConfigError
 from provider import factory
 
@@ -43,6 +43,7 @@ class Config(object):
             conf = yaml.safe_load(fh.read())
             if not 'default' in conf:
                 raise ConfigError("No Environment specified")
+            return conf['default']
 
     def get_env_conf(self):
         """Get the environment config file.
