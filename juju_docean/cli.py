@@ -1,8 +1,9 @@
 import argparse
+import sys
 
-from config import Config
-from constraints import IMAGE_MAP
-import commands
+from juju_docean.config import Config
+from juju_docean.constraints import IMAGE_MAP
+from juju_docean import commands
 
 
 def _default_opts(parser):
@@ -22,36 +23,42 @@ def _machine_opts(parser):
         help="Number of machines to allocate")
 
 
-def setup_parser():
-    parser = argparse.ArgumentParser(description="Juju Digital Ocean Plugin")
+PLUGIN_DESCRIPTION = "Juju Digital Ocean client-side provider"
 
+
+def setup_parser():
+    if '--description' in sys.argv:
+        print(PLUGIN_DESCRIPTION)
+        sys.exit(0)
+
+    parser = argparse.ArgumentParser(description=PLUGIN_DESCRIPTION)
     subparsers = parser.add_subparsers()
     bootstrap = subparsers.add_parser(
         'bootstrap',
         help="Bootstrap an environment")
     _default_opts(bootstrap)
     _machine_opts(bootstrap)
-    bootstrap.set_defaults({'command': commands.Bootstrap})
+    bootstrap.set_defaults(command=commands.Bootstrap)
 
     add_machine = subparsers.add_parser(
         'add-machine',
         help="Add machines to an environment")
     _default_opts(add_machine)
     _machine_opts(add_machine)
-    add_machine.set_defaults({'command': commands.AddMachine})
+    add_machine.set_defaults(command=commands.AddMachine)
 
     terminate_machine = subparsers.add_parser(
         "terminate-machine",
         help="Terminate machine")
-    terminate_machine.add_argument("machines", nargs="1+")
+    terminate_machine.add_argument("machines", nargs="+")
     _default_opts(terminate_machine)
-    terminate_machine.set_defaults({'command': commands.TerminateMachine})
+    terminate_machine.set_defaults(command=commands.TerminateMachine)
 
     destroy_environment = subparsers.add_parser(
         'destroy-environment',
         help="Destroy all machines in juju environment")
     _default_opts(destroy_environment)
-    destroy_environment.set_defaults({'command': commands.DestroyEnvironment})
+    destroy_environment.set_defaults(command=commands.DestroyEnvironment)
 
     return parser
 
