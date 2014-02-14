@@ -85,6 +85,9 @@ class Bootstrap(BaseCommand):
         self.update_bootstrap_host(instance.ip_address)
         self.env.bootstrap()
 
+    def check_preconditions(self):
+        return super(Bootstrap, self).check_preconditions()
+
     def update_bootstrap_host(self, ip_address):
         """Update bootstrap-host in named null provider environment.
 

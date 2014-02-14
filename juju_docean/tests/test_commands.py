@@ -122,7 +122,8 @@ class BootstrapTest(CommandBase):
         self.cmd.run()
 
     # TODO
-    # test existing named host
+    # test existing named host / ie precondition check for live env
+    # test for jenv bootstrap (also in test_environment.py)
 
 
 class AddMachineTest(CommandBase):

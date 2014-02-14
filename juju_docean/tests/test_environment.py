@@ -1,12 +1,15 @@
 
 import mock
+
 from base import Base
+from env import Environment
 
 
 class EnvironmentTest(Base):
 
-    def test_bootstrap(self):
+    def setUp(self):
+        self.config = mock.MagicMock()
+
+    def test_bootstrap_jenv(self):
         pass
 
-    def test_status(self):
-        pass
