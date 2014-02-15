@@ -105,13 +105,6 @@ class BootstrapTest(CommandBase):
         super(BootstrapTest, self).setUp()
         self.cmd = Bootstrap(self.config, self.provider, self.env)
 
-    def test_update_bootstrap_host(self):
-        self.setup_env()
-        self.cmd.update_bootstrap_host('1.1.1.1')
-        with open(self.config.get_env_conf()) as f:
-            conf = yaml.safe_load(f.read())['environments']['docean']
-        self.assertEqual(conf['bootstrap-host'], '1.1.1.1')
-
     def test_bootstrap(self):
         self.setup_env()
         self.config.series = "precise"

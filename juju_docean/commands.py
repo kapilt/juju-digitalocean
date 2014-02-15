@@ -88,20 +88,6 @@ class Bootstrap(BaseCommand):
     def check_preconditions(self):
         return super(Bootstrap, self).check_preconditions()
 
-    def update_bootstrap_host(self, ip_address):
-        """Update bootstrap-host in named null provider environment.
-
-        Notes this will lose comments and ordering in environments.yaml.
-        """
-        env_conf_path = self.config.get_env_conf()
-        with open(env_conf_path) as fh:
-            conf = yaml.safe_load(fh.read())
-            env = conf['environments'][self.config.get_env_name()]
-            env['bootstrap-host'] = ip_address
-
-        with open(env_conf_path, 'w') as fh:
-            fh.write(yaml.safe_dump(conf))
-
 
 class AddMachine(BaseCommand):
 
