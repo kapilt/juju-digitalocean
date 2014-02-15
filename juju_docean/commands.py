@@ -1,4 +1,5 @@
 import logging
+import time
 import uuid
 import yaml
 
@@ -174,5 +175,8 @@ class DestroyEnvironment(TerminateMachine):
             return True
         self._terminate_machines(state_service_filter)
 
+        # sadness, machines are marked dead, but juju is async to
+        # reality. either sleep (racy) or retry loop.
+        time.sleep(10)
         log.info("Destroying environment")
         self.env.destroy_environment()
