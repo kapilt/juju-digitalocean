@@ -3,9 +3,15 @@ import logging
 
 log = logging.getLogger('juju.docean')
 
+# juju-core will defer to either ssh or go.crypto/ssh impl
+# these options are only for the instances created here.
+SSH_CMD = ("/usr/bin/ssh",
+           "-o", "StrictHostKeyChecking=no",
+           "-o", "UserKnownHostsFile=/dev/null")
+
 
 def check_ssh(host, user="root"):
-    cmd = ["/usr/bin/ssh", "%s@%s" % (user, host), "ls"]
+    cmd = list(SSH_CMD) + ["%s@%s" % (user, host), "ls"]
     process = subprocess.Popen(
         args=cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
@@ -18,7 +24,7 @@ def check_ssh(host, user="root"):
 
 
 def update_instance(host, user="root"):
-    base = ["/usr/bin/ssh", "%s@%s" % (user, host)]
+    base = list(SSH_CMD) + ["%s@%s" % (user, host)]
     subprocess.check_output(
         base + ["apt-get", "update"], stderr=subprocess.STDOUT)
 # Don't really need to update the image, just the package lists.
