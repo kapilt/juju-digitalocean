@@ -47,6 +47,7 @@ class Runner(object):
     def start(self, count):
         for i in range(count):
             runner = OpRunner(self.jobs, self.results)
+            runner.daemon = True
             self.runners.append(runner)
             runner.start()
         self.started = True

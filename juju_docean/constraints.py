@@ -28,17 +28,18 @@ IMAGE_MAP = {
     'saucy': 1505699,
     '13.10': 1505699}
 
-
 # Record regions so we can offer nice aliases.
 REGIONS = [
     {'name': 'New York 1', 'aliases': ['nyc1', 'nyc'], 'id': 1},
+    {'name': 'San Francisco 1', 'aliases': ['sfo1', 'sfo'], 'id': 3},
     {'name': 'New York 2', 'aliases': ['nyc2'], 'id': 4},
-    {'name': 'Amsterdam 2', 'aliases': ['ams2', 'ams'], 'id': 5}]
+    {'name': 'Amsterdam 2', 'aliases': ['ams2', 'ams'], 'id': 5},
+    {'name': 'Singapore 1', 'aliases': ['sg'], 'id': 6}]
 
 DEFAULT_REGION = 4
 
-# afaik, these are unavailable
-#    {'name': 'San Francisco 1', 'aliases': ['sfo1']
+# afaics, these are unavailable
+#
 #    {'name': 'Amsterdam 1 1', 'aliases': ['ams1']
 
 SUFFIX_SIZES = {

@@ -1,8 +1,11 @@
+import logging
 import shutil
 import subprocess
 
 import os
 import yaml
+
+log = logging.getLogger("juju.docean")
 
 
 class Environment(object):
@@ -10,16 +13,29 @@ class Environment(object):
     def __init__(self, config):
         self.config = config
 
-    def _run(self, command, env=None):
-        args = ['juju', '-e', self.config.get_env_name()]
+    def _run(self, command, env=None, capture_err=False):
+        if env is None:
+            env = dict(os.environ)
+        env["JUJU_ENV"] = self.config.get_env_name()
+        args = ['juju']
         args.extend(command)
-        return subprocess.check_output(args, env=env)
+        stderr = None
+        if capture_err:
+            stderr = subprocess.STDOUT
+        log.debug("Running juju command: %s", " ".join(args))
+        try:
+            return subprocess.check_output(args, env=env, stderr=stderr)
+        except subprocess.CalledProcessError, e:
+            log.error(
+                "Failed to run command %s\n%s",
+                ' '.join(args), e.output)
+            raise
 
     def status(self):
         return yaml.safe_load(self._run(['status']))
 
     def add_machine(self, location):
-        return self._run(['add-machine', location])
+        return self._run(['add-machine', location], capture_err=True)
 
     def terminate_machines(self, machines):
         cmd = ['terminate-machine', '--force']
@@ -27,7 +43,8 @@ class Environment(object):
         return self._run(cmd)
 
     def destroy_environment(self):
-        return self._run(['destroy-environment'])
+        return self._run(['destroy-environment', "-y",
+                          self.config.get_env_name()])
 
     def bootstrap(self):
         return self._run(['bootstrap', '-v'])
@@ -62,7 +79,9 @@ class Environment(object):
         # Change JUJU_ENV
         env = dict(os.environ)
         env['JUJU_HOME'] = boot_home
-        self._run(['bootstrap', '-v'], env=env)
+        env['JUJU_LOGGING'] = "<root>=DEBUG"
+        self._run(['bootstrap', '--debug', '--upload-tools'],
+                  env=env, capture_err=True)
 
         # Copy over the jenv
         shutil.copy(

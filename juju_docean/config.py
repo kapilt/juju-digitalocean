@@ -3,7 +3,7 @@ import yaml
 
 from juju_docean.env import Environment
 from juju_docean.exceptions import ConfigError
-from juju_docean.provider import factory
+from juju_docean import provider
 
 
 class Config(object):
@@ -14,12 +14,20 @@ class Config(object):
     def connect_provider(self):
         """Connect to digital ocean.
         """
-        return factory()
+        return provider.factory()
 
     def connect_environment(self):
         """Return a websocket connection to the environment.
         """
         return Environment(self)
+
+    def validate(self):
+        provider.validate()
+        self.get_env_name()
+
+    @property
+    def verbose(self):
+        return self.options.verbose
 
     @property
     def constraints(self):
@@ -28,6 +36,14 @@ class Config(object):
     @property
     def series(self):
         return self.options.series
+
+    @property
+    def upload_tools(self):
+        return getattr(self.options, 'upload_tools', False)
+
+    @property
+    def num_machines(self):
+        return getattr(self.options, 'num_machines', 0)
 
     @property
     def juju_home(self):

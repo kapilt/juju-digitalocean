@@ -73,7 +73,7 @@ class Bootstrap(BaseCommand):
     def run(self):
         keys = self.check_preconditions()
         image, size, region = self.solve_constraints()
-        log.debug("Launching bootstrap host")
+        log.info("Launching bootstrap host")
         params = dict(
             name="%s-0" % self.config.get_env_name(), image_id=image,
             size_id=size, region_id=region, ssh_key_ids=keys)
@@ -81,7 +81,7 @@ class Bootstrap(BaseCommand):
         op = ops.MachineAdd(self.provider, self.env, params)
         instance = op.run()
 
-        log.info("Updating environment bootstrap host")
+        log.info("Bootstrapping environment")
         self.env.bootstrap_jenv(instance.ip_address)
 
     def check_preconditions(self):
@@ -107,20 +107,20 @@ class AddMachine(BaseCommand):
     def run(self):
         keys = self.check_preconditions()
         image, size, region = self.solve_constraints()
-        log.debug("Launching instances")
+        log.debug("Launching %d instances", self.config.num_machines)
 
-        params = dict(
+        template = dict(
             image_id=image, size_id=size, region_id=region, ssh_key_ids=keys)
 
         for n in range(self.config.num_machines):
+            params = dict(template)
             params['name'] = "%s-%s" % (
                 self.config.get_env_name(), uuid.uuid4().hex)
-            self.runner.queue_op(ops.MachineRegister(
-                self.provider, self.env, params))
+            op = ops.MachineRegister(self.provider, self.env, params)
+            self.runner.queue_op(op)
 
         for (instance, machine_id) in self.runner.iter_results():
-            log.info("Registered %s as machine %s",
-                     instance.ip_address, machine_id)
+            log.info("Registered %s as juju machine", instance.ip_address)
 
 
 class TerminateMachine(BaseCommand):
@@ -132,6 +132,7 @@ class TerminateMachine(BaseCommand):
         self._terminate_machines(lambda x: x in self.config.options.machines)
 
     def _terminate_machines(self, remove_machines):
+        log.debug("Checking for machines to terminate")
         status = self.env.status()
         machines = status.get('machines', {})
 
@@ -145,8 +146,11 @@ class TerminateMachine(BaseCommand):
                      'instance_id': machines[m]['instance-id'],
                      'machine_id': m})
 
-        address_map = dict([(d.ip_address, d.id) for
-                            d in self.provider.get_instances()])
+        if remove:
+            log.info("Terminating machines %s",
+                     " ".join([m['machine_id'] for m in remove]))
+            address_map = dict([(d.ip_address, d.id) for
+                                d in self.provider.get_instances()])
         for m in remove:
             instance_id = address_map.get(m['address'])
             if instance_id is None:
@@ -177,4 +181,5 @@ class DestroyEnvironment(TerminateMachine):
             return True
         self._terminate_machines(state_service_filter)
 
+        log.info("Destroying environment")
         self.env.destroy_environment()

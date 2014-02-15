@@ -2,6 +2,7 @@ import logging
 import os
 import time
 
+from juju_docean.exceptions import ConfigError
 from dop import client as dop
 
 log = logging.getLogger("juju.docean")
@@ -10,6 +11,10 @@ log = logging.getLogger("juju.docean")
 def factory():
     cfg = DigitalOcean.get_config()
     return DigitalOcean(cfg)
+
+
+def validate():
+    DigitalOcean.get_config()
 
 
 class DigitalOcean(object):
@@ -37,6 +42,9 @@ class DigitalOcean(object):
         if ssh_key:
             provider_conf['ssh_key'] = ssh_key
 
+        if (not 'client_id' in provider_conf or
+                not 'api_key' in provider_conf):
+            raise ConfigError("Missing digital ocean api credentials")
         return provider_conf
 
     def get_ssh_keys(self):
@@ -45,7 +53,7 @@ class DigitalOcean(object):
         return self.client.all_ssh_keys()
 
     def get_instances(self):
-        return self.client.show_all_active_droplets()
+        return self.client.show_active_droplets()
 
     def get_instance(self, instance_id):
         return self.client.show_droplet(instance_id)
@@ -55,24 +63,33 @@ class DigitalOcean(object):
             params['virtio'] = True
         if not 'private_networking' in params:
             params['private_networking'] = True
+        if 'ssh_key_ids' in params:
+            params['ssh_key_ids'] = map(str, params['ssh_key_ids'])
+        return self.client.create_droplet(**params)
 
     def terminate_instance(self, instance_id):
-        self.client.destroy_droplet(self.params['instance_id'])
+        self.client.destroy_droplet(instance_id)
 
     def wait_on(self, instance):
-        return self._wait_on(instance['event_id'], instance.name)
+        return self._wait_on(instance.event_id, instance.name)
 
     def _wait_on(self, event, name, event_type=1):
         while 1:
-            log.debug("Waiting on %s", name)
-            result = self.client.request("/events/%s")
-            event = result['event']
-            if not event['event_type_id'] == event_type:
+            result = self.client.request("/events/%s" % event)
+            event_data = result['event']
+            if not event_data['event_type_id'] == event_type:
                 # umm.. we're only waiting on creates atm.
                 raise ValueError(
                     "Waiting on invalid event type: %d for %s",
-                    event['event_type_id'], name)
-            elif event['action_status'] == 'done':
+                    event_data['event_type_id'], name)
+            elif event_data['action_status'] == 'done':
                 log.debug("Instance %s ready", name)
+                # Give ssh a chance to come up.. juju just bails otherwise.
+                time.sleep(8)
                 return
-            time.sleep(2)
+            elif result['status'] != "OK":
+                log.warning("Unknown provider error %s", result)
+            else:
+                log.debug("Waiting on instance %s %s%%\n%s\n",
+                          name, event_data.get('percentage') or '0', result)
+            time.sleep(8)

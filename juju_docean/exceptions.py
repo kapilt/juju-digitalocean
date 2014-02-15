@@ -17,3 +17,8 @@ class MissingKey(ValueError):
 class ConstraintError(ValueError):
     """ Specificed constraint is invalid.
     """
+
+
+class TimeoutError(ValueError):
+    """ Instance could not be provisioned before timeout.
+    """

@@ -1,8 +1,10 @@
 import argparse
+import logging
 import sys
 
 from juju_docean.config import Config
 from juju_docean.constraints import IMAGE_MAP
+from juju_docean.exceptions import ConfigError
 from juju_docean import commands
 
 
@@ -10,17 +12,16 @@ def _default_opts(parser):
     parser.add_argument(
         "-e", "--environment", help="Juju environment to operate on")
     parser.add_argument(
-        "-v", "--verbose", help="Verbose output")
+        "-v", "--verbose", action="store_true", help="Verbose output")
 
 
 def _machine_opts(parser):
-    parser.add_argument("--constraints")
+    parser.add_argument(
+        "--constraints", default="",
+        help="Machine allocation criteria")
     parser.add_argument(
         "--series", default="precise", choices=IMAGE_MAP.keys(),
         help="OS Release for machine.")
-    parser.add_argument(
-        "-n", "--num-machines", type=int, default=1,
-        help="Number of machines to allocate")
 
 
 PLUGIN_DESCRIPTION = "Juju Digital Ocean client-side provider"
@@ -38,11 +39,18 @@ def setup_parser():
         help="Bootstrap an environment")
     _default_opts(bootstrap)
     _machine_opts(bootstrap)
+    bootstrap.add_argument(
+        "--upload-tools",
+        action="store_true",
+        help="upload local version of tools before bootstrapping")
     bootstrap.set_defaults(command=commands.Bootstrap)
 
     add_machine = subparsers.add_parser(
         'add-machine',
         help="Add machines to an environment")
+    add_machine.add_argument(
+        "-n", "--num-machines", type=int, default=1,
+        help="Number of machines to allocate")
     _default_opts(add_machine)
     _machine_opts(add_machine)
     add_machine.set_defaults(command=commands.AddMachine)
@@ -67,11 +75,25 @@ def main():
     parser = setup_parser()
     options = parser.parse_args()
     config = Config(options)
-    options.command(
+
+    if config.verbose:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
+    logging.basicConfig(level=level)
+    logging.getLogger('requests').setLevel(level=logging.WARNING)
+
+    try:
+        config.validate()
+    except ConfigError, e:
+        print("Configuration error: %s" % str(e))
+        sys.exit(1)
+
+    cmd = options.command(
         config,
         config.connect_provider(),
         config.connect_environment())
-
+    cmd.run()
 
 if __name__ == '__main__':
     main()
