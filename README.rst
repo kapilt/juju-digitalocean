@@ -93,12 +93,6 @@ Now we can bootstrap an environment::
 
   $ juju docean bootstrap --constraints="mem=512Mb, region=ams"
 
-If we know at bootstrap how many machines we want and their homogenous
-we can use a shortcut to bootstrap and allocate all the machine in a
-single step::
-
-  $ juju docean bootstrap -n 5 --constraints="mem=1G, region=nyc2"
-
 All machines created by this plugin will have the juju environment
 name as a prefix for their droplet name.
 
@@ -127,7 +121,7 @@ actually running. ::
 
 And we can destroy the entire environment via::
 
-  $ juju docean destroy-environment env_name
+  $ juju docean destroy-environment
 
 
 Constraints
