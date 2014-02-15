@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='juju-docean',
-      version="0.0.3",
+      version="0.0.8",
       classifiers=[
           'Intended Audience :: Developers',
           'Programming Language :: Python',

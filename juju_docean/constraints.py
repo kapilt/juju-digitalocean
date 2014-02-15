@@ -34,7 +34,7 @@ REGIONS = [
     {'name': 'San Francisco 1', 'aliases': ['sfo1', 'sfo'], 'id': 3},
     {'name': 'New York 2', 'aliases': ['nyc2'], 'id': 4},
     {'name': 'Amsterdam 2', 'aliases': ['ams2', 'ams'], 'id': 5},
-    {'name': 'Singapore 1', 'aliases': ['sg'], 'id': 6}]
+    {'name': 'Singapore 1', 'aliases': ['sg', 'sg1'], 'id': 6}]
 
 DEFAULT_REGION = 4
 

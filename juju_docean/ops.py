@@ -45,19 +45,16 @@ class MachineAdd(MachineOp):
         Unfortunately this can take several minutes, depending on instance
         type.
         """
-        log.info("Updating precise instance %s (DO bug http://bit.ly/1gLwsgs)",
-                 instance.ip_address)
+#        log.info("Update precise instance %s (DO bug http://bit.ly/1gLwsgs)",
+#                 instance.ip_address)
         t = time.time()
         ssh.update_instance(instance.ip_address)
-        log.debug("Update %s complete in %0.2f",
+        log.debug("Update precise instance %s complete in %0.2f",
                   instance.ip_address, time.time() - t)
 
     def verify_ssh(self, instance):
         # Manual provider bails immediately upon failure to connect
-        # on ssh, we loop to allow the instance time to connect.
-
-        # Also digital ocean precise images (12.0.4.3) as of 2/15/2014
-        # are somewhat broken and need an apt-get/update/upgrade cycle.
+        # on ssh, we loop to allow the instance time to start ssh.
         max_time = self.timeout + time.time()
         running = False
         while max_time > time.time():

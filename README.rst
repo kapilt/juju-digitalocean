@@ -2,7 +2,7 @@ Juju Digital Ocean Provider
 ---------------------------
 
 This package provides a cli plugin for juju that allows for cli based
-provisioning of machines on digital ocean.
+provisioning of machines on digital ocean. I like to call it JuDo :-)
 
 Digital ocean is linux vps provider utilizing kvm and ssd across
 multiple data centers at a very competitive price with hourly billing.
@@ -14,15 +14,22 @@ lego fashion at runtime into complex application topologies.
 Install
 =======
 
-**This plugin requires a development version of juju (> 1.17.2)**
+**This plugin requires a development version of juju (>= 1.17.2)**
 
-Installation is done via pip/easy_install which is the python language
+A usable dev version of juju is available via the dev ppa::
+
+  $ sudo add-apt-repository ppa:juju/devel
+  $ apt-get update && apt-get install juju
+  $ juju version
+  1.17.2-saucy-amd64
+
+Plugin installation is done via pip/easy_install which is the python language
 package managers, its available by default on ubuntu. Also recommended
 is virtualenv to sandbox this install from your system packages::
 
   $ pip install -U juju-docean
 
-Currently the transitive dependency tree is PyYAML, requests, dop.
+Fwiw, currently the transitive dependency tree is PyYAML, requests, dop.
 
 
 Setup
@@ -42,19 +49,9 @@ digital ocean account you can sign up `here`_.
 Credentials for the digital ocean api can be obtained from your account
 dashboard at https://cloud.digitalocean.com/api_access
 
-The credentials can be provided to the plugin via one three ways.
+The credentials can be provided to the plugin via.
 
   - Environment variables DO_CLIENT_ID and DO_API_KEY
-  - Command line parameters
-  - A config file
-
-The config file must be placed in the JUJU_HOME directory (default
-~/.juju) and must be named docean.conf. This file is in ini
-format. Sample contents below::
-
-   DO_CLIENT_ID = aoweirj
-   DO_API_KEY = asdfo
-   DO_SSH_KEY = default
 
 This digital ocean plugin uses the manual provisioning capabilities of
 juju core. As a result its required to allocate machines in the
@@ -92,7 +89,10 @@ Usage
 
 Now we can bootstrap an environment::
 
-  $ juju docean bootstrap --constraints="mem=512Mb, region=ams"
+  $ juju docean bootstrap --constraints="mem=2g, region=nyc" --upload-tools
+
+The --upload-tools parameter is required atm due to a juju bug 
+http://pad.lv/1280678
 
 All machines created by this plugin will have the juju environment
 name as a prefix for their droplet name.
@@ -110,20 +110,20 @@ We can now use standard juju commands for deploying workloads::
   $ juju add-relation wordpress mysql
   $ juju status
 
-We can terminate allocated machines by their machine id. ::
+We can terminate allocated machines by their machine id. By default
+machines are forcibly terminated, which will also terminate any
+units on those machines, and is not dependent on the machine actually
+running.::
 
   $ juju docean terminate-machine 1 2 3
-
-Machines can also be forcibly terminated, which will also terminate
-any units on those machines, and is not dependent on the machine
-actually running. ::
-
-  $ juju docean terminate-machine --force 5
 
 And we can destroy the entire environment via::
 
   $ juju docean destroy-environment
 
+
+All commands have builtin help facilities and accept a -v option which will
+print verbose output while running.
 
 Constraints
 ===========
@@ -142,10 +142,10 @@ This plugin accepts the standard `juju constraints`_
 Additionally it supports the following provider specific constraints.
 
   - 'region' to denote the data center to utilize (currently 'ams2',
-    'nyc1', 'nyc2') defaulting to 'nyc2'.
+    'nyc1', 'nyc2', 'sfo1', 'sg1') defaulting to 'nyc2'.
 
   - 'transfer' to denote the terabytes of transfer included in the
-    instance montly cost.
+    instance montly cost (integer size in gigabytes).
 
 
 .. _here: https://www.digitalocean.com/?refcode=5df4b80c84c8
