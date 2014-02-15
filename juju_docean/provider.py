@@ -74,6 +74,7 @@ class DigitalOcean(object):
         return self._wait_on(instance.event_id, instance.name)
 
     def _wait_on(self, event, name, event_type=1):
+        loop_count = 0
         while 1:
             result = self.client.request("/events/%s" % event)
             event_data = result['event']
@@ -84,12 +85,14 @@ class DigitalOcean(object):
                     event_data['event_type_id'], name)
             elif event_data['action_status'] == 'done':
                 log.debug("Instance %s ready", name)
-                # Give ssh a chance to come up.. juju just bails otherwise.
-                time.sleep(8)
                 return
             elif result['status'] != "OK":
                 log.warning("Unknown provider error %s", result)
             else:
-                log.debug("Waiting on instance %s %s%%\n%s\n",
-                          name, event_data.get('percentage') or '0', result)
+                log.debug("Waiting on instance %s %s%%",
+                          name, event_data.get('percentage') or '0')
+            if loop_count > 8:
+                log.debug("Diagnostics on instance %s event %s",
+                          name, result)
             time.sleep(8)
+            loop_count += 1

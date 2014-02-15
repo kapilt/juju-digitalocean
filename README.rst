@@ -14,14 +14,15 @@ lego fashion at runtime into complex application topologies.
 Install
 =======
 
-**This plugin requires a development version of juju** Currently that
-  is juju core trunk (~ 1.17.1).
+**This plugin requires a development version of juju (> 1.17.2)**
 
 Installation is done via pip/easy_install which is the python language
 package managers, its available by default on ubuntu. Also recommended
 is virtualenv to sandbox this install from your system packages::
 
   $ pip install -U juju-docean
+
+Currently the transitive dependency tree is PyYAML, requests, dop.
 
 
 Setup

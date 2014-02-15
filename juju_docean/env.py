@@ -80,8 +80,10 @@ class Environment(object):
         env = dict(os.environ)
         env['JUJU_HOME'] = boot_home
         env['JUJU_LOGGING'] = "<root>=DEBUG"
-        self._run(['bootstrap', '--debug', '--upload-tools'],
-                  env=env, capture_err=True)
+        cmd = ['bootstrap', '--debug']
+        if self.config.upload_tools:
+            cmd.append("--upload-tools")
+        self._run(cmd, env=env, capture_err=True)
 
         # Copy over the jenv
         shutil.copy(

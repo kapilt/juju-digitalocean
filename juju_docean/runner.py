@@ -42,7 +42,12 @@ class Runner(object):
             self.stop()
 
     def gather_result(self):
-        return self.results.get()
+        # Loop so we can receive signals
+        while 1:
+            try:
+                return self.results.get(timeout=1)
+            except Empty:
+                continue
 
     def start(self, count):
         for i in range(count):
@@ -54,7 +59,9 @@ class Runner(object):
 
     def stop(self):
         for runner in self.runners:
-            runner.join()
+            # Loop so we can receive signals
+            while runner.is_alive():
+                runner.join(timeout=1.0)
         self.started = False
 
 
