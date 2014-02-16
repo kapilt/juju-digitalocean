@@ -95,6 +95,3 @@ class Environment(object):
                     "environments", "%s.jenv" % env_name))
         finally:
             shutil.rmtree(boot_home)
-
-        # Kill the leftovers
-        shutil.rmtree(boot_home)
