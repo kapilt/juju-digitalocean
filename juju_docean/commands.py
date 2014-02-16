@@ -84,7 +84,11 @@ class Bootstrap(BaseCommand):
         instance = op.run()
 
         log.info("Bootstrapping environment")
-        self.env.bootstrap_jenv(instance.ip_address)
+        try:
+            self.env.bootstrap_jenv(instance.ip_address)
+        except:
+            self.provider.terminate_instance(instance.id)
+            raise
 
     def check_preconditions(self):
         return super(Bootstrap, self).check_preconditions()

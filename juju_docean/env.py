@@ -83,14 +83,18 @@ class Environment(object):
         cmd = ['bootstrap', '--debug']
         if self.config.upload_tools:
             cmd.append("--upload-tools")
-        self._run(cmd, env=env, capture_err=True)
 
-        # Copy over the jenv
-        shutil.copy(
-            os.path.join(
-                boot_home, "environments", "%s.jenv" % env_name),
-            os.path.join(
-                self.config.juju_home, "environments", "%s.jenv" % env_name))
+        try:
+            self._run(cmd, env=env, capture_err=True)
+            # Copy over the jenv
+            shutil.copy(
+                os.path.join(
+                    boot_home, "environments", "%s.jenv" % env_name),
+                os.path.join(
+                    self.config.juju_home,
+                    "environments", "%s.jenv" % env_name))
+        finally:
+            shutil.rmtree(boot_home)
 
         # Kill the leftovers
         shutil.rmtree(boot_home)
