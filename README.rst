@@ -62,10 +62,7 @@ SSH Key
 +++++++
 
 An ssh key is required for use by this plugin and the public key
-must be uploaded to the digital ocean control panel. If you have
-multiple keys there you can specify the key name to use when creating
-instances via the environment variable DO_SSH_KEY, config file, or cli
-parameter.
+must be uploaded to the digital ocean control panel.
 
 **Note** If you have a large number of ssh keys, ssh will only attempt
 a certain number of key logins before giving up, ideally you want to
