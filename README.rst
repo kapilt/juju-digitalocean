@@ -1,6 +1,9 @@
 Juju Digital Ocean Provider
 ---------------------------
 
+.. image:: https://www.digitalocean.com/assets/v2/badges/digitalocean-vertical-eps.png
+   :target: here_
+
 This package provides a cli plugin for juju that allows for cli based
 provisioning of machines on digital ocean. I like to call it JuDo :-)
 
@@ -12,8 +15,6 @@ collection of workloads definitions (charms) that can be assembled
 lego fashion at runtime into complex application topologies.
 
 http://juju.ubuntu.com
-
-http://digitalocean.com
 
 
 Install
