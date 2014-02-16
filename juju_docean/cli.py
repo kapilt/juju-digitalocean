@@ -4,7 +4,7 @@ import sys
 
 from juju_docean.config import Config
 from juju_docean.constraints import IMAGE_MAP
-from juju_docean.exceptions import ConfigError
+from juju_docean.exceptions import ConfigError, PrecheckError
 from juju_docean import commands
 
 
@@ -93,7 +93,14 @@ def main():
         config,
         config.connect_provider(),
         config.connect_environment())
-    cmd.run()
+    try:
+        cmd.run()
+    except ConfigError, e:
+        print("Configuration error: %s" % str(e))
+        sys.exit(1)
+    except PrecheckError, e:
+        print("Precheck error: %s" % str(e))
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

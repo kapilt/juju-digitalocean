@@ -42,8 +42,9 @@ class EnvironmentTest(Base):
                      "bootstrap-user": "root",
                      "bootstrap-host": "manual"}}}))
 
-        def verify_home(cmd, env):
-            self.assertEqual(cmd, ['juju', '-e', 'docean', 'bootstrap', '-v'])
+        def verify_home(cmd, env, stderr=None):
+            self.assertEqual(
+                cmd, ['juju', 'bootstrap', '--debug', '--upload-tools'])
             self.assertTrue(env['JUJU_HOME'].startswith(juju_home))
             self.assertTrue(env['JUJU_HOME'].endswith('boot-docean'))
             with open(os.path.join(env['JUJU_HOME'],

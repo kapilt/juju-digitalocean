@@ -1,6 +1,8 @@
+import httplib
 import logging
 import shutil
 import subprocess
+import socket
 
 import os
 import yaml
@@ -33,6 +35,29 @@ class Environment(object):
 
     def status(self):
         return yaml.safe_load(self._run(['status']))
+
+    def is_running(self):
+        """Try to connect the api server websocket to see if env is running.
+        """
+        name = self.config.get_env_name()
+        jenv = os.path.join(
+            self.config.juju_home, "environments", "%s.jenv" % name)
+        if not os.path.exists(jenv):
+            return False
+        with open(jenv) as fh:
+            data = yaml.safe_load(fh.read())
+            if not data:
+                return False
+            conf = data.get('bootstrap-config')
+            if not conf['type'] in ('manual', 'null'):
+                return False
+        conn = httplib.HTTPSConnection(
+            conf['bootstrap-host'], port=17070, timeout=1.2)
+        try:
+            conn.request("GET", "/")
+            return True
+        except socket.error:
+            return False
 
     def add_machine(self, location):
         return self._run(['add-machine', location], capture_err=True)

@@ -2,7 +2,7 @@ import logging
 import os
 import time
 
-from juju_docean.exceptions import ConfigError
+from juju_docean.exceptions import ConfigError, ProviderError
 from dop import client as dop
 
 log = logging.getLogger("juju.docean")
@@ -76,10 +76,10 @@ class DigitalOcean(object):
     def _wait_on(self, event, name, event_type=1):
         loop_count = 0
         while 1:
+            time.sleep(8)  # Takes on average 1m for a do instance.
             result = self.client.request("/events/%s" % event)
             event_data = result['event']
             if not event_data['event_type_id'] == event_type:
-                # umm.. we're only waiting on creates atm.
                 raise ValueError(
                     "Waiting on invalid event type: %d for %s",
                     event_data['event_type_id'], name)
@@ -92,7 +92,13 @@ class DigitalOcean(object):
                 log.debug("Waiting on instance %s %s%%",
                           name, event_data.get('percentage') or '0')
             if loop_count > 8:
+                # Its taking a long while (2m+), give the user some
+                # diagnostics if in debug mode.
                 log.debug("Diagnostics on instance %s event %s",
                           name, result)
-            time.sleep(8)
+            if loop_count > 25:
+                # After 3.5m for instance, just bail as provider error.
+                raise ProviderError(
+                    "Failed to get running instance %s event: %s" % (
+                        name, result))
             loop_count += 1

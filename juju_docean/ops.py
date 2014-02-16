@@ -41,20 +41,18 @@ class MachineAdd(MachineOp):
         Those images are too old to be used out of the box without updating.
         Ie. basic tasks like apt-get install python-software-properties failed.
         Filed as upstream DO issue @ http://bit.ly/1gLwsgs
-
-        Unfortunately this can take several minutes, depending on instance
-        type.
         """
-#        log.info("Update precise instance %s (DO bug http://bit.ly/1gLwsgs)",
-#                 instance.ip_address)
         t = time.time()
         ssh.update_instance(instance.ip_address)
         log.debug("Update precise instance %s complete in %0.2f",
                   instance.ip_address, time.time() - t)
 
     def verify_ssh(self, instance):
-        # Manual provider bails immediately upon failure to connect
-        # on ssh, we loop to allow the instance time to start ssh.
+        """Workaround for manual provisioning and ssh availability.
+
+        Manual provider bails immediately upon failure to connect on
+        ssh, we loop to allow the instance time to start ssh.
+        """
         max_time = self.timeout + time.time()
         running = False
         while max_time > time.time():
@@ -65,7 +63,8 @@ class MachineAdd(MachineOp):
             except subprocess.CalledProcessError, e:
                 if ("Connection refused" in e.output or
                         "Connection timed out" in e.output or
-                        "Connection closed" in e.output):
+                        "Connection closed" in e.output or
+                        "Connection reset by peer" in e.output):
                     log.debug(
                         "Waiting for ssh on id:%s ip:%s name:%s remaining:%d",
                         instance.id, instance.ip_address, instance.name,

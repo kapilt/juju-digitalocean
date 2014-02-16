@@ -22,3 +22,8 @@ class ConstraintError(ValueError):
 class TimeoutError(ValueError):
     """ Instance could not be provisioned before timeout.
     """
+
+
+class ProviderError(Exception):
+    """Instance could not be provisioned.
+    """

@@ -29,7 +29,7 @@ class Runner(object):
         auto = not self.started
 
         if auto:
-            self.start(self.DEFAULT_NUM_RUNNER)
+            self.start(min(self.DEFAULT_NUM_RUNNER, self.job_count))
 
         for i in range(self.job_count):
             self.job_count -= 1
@@ -42,12 +42,7 @@ class Runner(object):
             self.stop()
 
     def gather_result(self):
-        # Loop so we can receive signals
-        while 1:
-            try:
-                return self.results.get(timeout=1)
-            except Empty:
-                continue
+        return self.results.get()
 
     def start(self, count):
         for i in range(count):
@@ -59,9 +54,7 @@ class Runner(object):
 
     def stop(self):
         for runner in self.runners:
-            # Loop so we can receive signals
-            while runner.is_alive():
-                runner.join(timeout=1.0)
+            runner.join()
         self.started = False
 
 

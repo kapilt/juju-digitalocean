@@ -105,14 +105,23 @@ class BootstrapTest(CommandBase):
         super(BootstrapTest, self).setUp()
         self.cmd = Bootstrap(self.config, self.provider, self.env)
 
-    def test_bootstrap(self):
+    @mock.patch('juju_docean.ops.ssh')
+    def test_bootstrap(self, mock_ssh):
         self.setup_env()
+        self.env.is_running.return_value = False
         self.config.series = "precise"
+
+        mock_ssh.check_ssh.return_value = True
+        mock_ssh.update_instance.return_value = True
+
         self.provider.get_instance.return_value = dop.Droplet.from_json(dict(
             id=2121,
             name='docean-13290123j13',
             ip_address="10.0.2.1"))
         self.cmd.run()
+
+        mock_ssh.check_ssh.assert_called_once_with('10.0.2.1')
+        mock_ssh.update_instance.assert_called_once_with('10.0.2.1')
 
     # TODO
     # test existing named host / ie precondition check for live env
@@ -160,7 +169,8 @@ class DestroyEnvironmentTest(CommandBase):
         super(DestroyEnvironmentTest, self).setUp()
         self.cmd = DestroyEnvironment(self.config, self.provider, self.env)
 
-    def test_destroy_environment(self):
+    @mock.patch('juju_docean.commands.time')
+    def test_destroy_environment(self, mock_time):
         self.setup_env()
         self.env.status.return_value = {
             'machines': {
@@ -176,8 +186,12 @@ class DestroyEnvironmentTest(CommandBase):
                 id=221, name="docean-123123", ip_address="10.0.1.23")),
             dop.Droplet.from_json(dict(
                 id=258, name="docena-209123", ip_address="10.0.1.25"))]
+
+        # Destroy Env has a sleep / mock it out.
+        mock_time.sleep.return_value = None
         self.cmd.run()
         self.provider.terminate_instance.assert_called_once_with(258)
+        self.env.terminate_machines.assert_called_once_with(['1'])
 
 if __name__ == '__main__':
     unittest.main()

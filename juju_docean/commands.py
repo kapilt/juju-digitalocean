@@ -4,7 +4,7 @@ import uuid
 import yaml
 
 from juju_docean.constraints import IMAGE_MAP, solve_constraints
-from juju_docean.exceptions import ConfigError
+from juju_docean.exceptions import ConfigError, PrecheckError
 from juju_docean import ops
 from juju_docean.runner import Runner
 
@@ -91,7 +91,12 @@ class Bootstrap(BaseCommand):
             raise
 
     def check_preconditions(self):
-        return super(Bootstrap, self).check_preconditions()
+        result = super(Bootstrap, self).check_preconditions()
+        if self.env.is_running():
+            raise PrecheckError(
+                "Environment %s is already bootstrapped" % (
+                self.config.get_env_name()))
+        return result
 
 
 class AddMachine(BaseCommand):
@@ -180,7 +185,8 @@ class DestroyEnvironment(TerminateMachine):
         self._terminate_machines(state_service_filter)
 
         # sadness, machines are marked dead, but juju is async to
-        # reality. either sleep (racy) or retry loop.
+        # reality. either sleep (racy) or retry loop, 10s seems to
+        # plenty of time.
         time.sleep(10)
         log.info("Destroying environment")
         self.env.destroy_environment()

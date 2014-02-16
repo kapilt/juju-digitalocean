@@ -4,7 +4,8 @@ import logging
 log = logging.getLogger('juju.docean')
 
 # juju-core will defer to either ssh or go.crypto/ssh impl
-# these options are only for the instances created here.
+# these options are only for the ssh ops below (availability
+# check and apt-get update on precise instances).
 SSH_CMD = ("/usr/bin/ssh",
            "-o", "StrictHostKeyChecking=no",
            "-o", "UserKnownHostsFile=/dev/null")
