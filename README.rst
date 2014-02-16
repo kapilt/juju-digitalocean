@@ -11,6 +11,11 @@ Juju provides for workloads management and orchestration using a
 collection of workloads definitions (charms) that can be assembled
 lego fashion at runtime into complex application topologies.
 
+http://juju.ubuntu.com
+
+http://digitalocean.com
+
+
 Install
 =======
 
@@ -73,7 +78,7 @@ Juju Config
 +++++++++++
 
 Next let's configure a juju environment for digital ocean, add an
-a null provider enviroment to 'environments.yaml', for example::
+a null provider environment to 'environments.yaml', for example::
 
  environments:
    digitalocean:
@@ -84,43 +89,91 @@ a null provider enviroment to 'environments.yaml', for example::
 Usage
 =====
 
-Now we can bootstrap an environment::
+We need to tell juju which environment we want to use, there are
+several ways to do this, either of the following will do the trick::
 
-  $ juju docean bootstrap --constraints="mem=2g, region=nyc" --upload-tools
+  $ juju switch digitalocean
+  $ export JUJU_ENV=digitalocean
 
-The --upload-tools parameter is required atm due to a juju bug 
-http://pad.lv/1280678
+Now we can bootstrap our digital ocean environment::
+
+  $ juju docean bootstrap --constraints="mem=2g, region=nyc1"
+
+Which will create a droplet with 2Gb of ram in the nyc1 data center.
 
 All machines created by this plugin will have the juju environment
-name as a prefix for their droplet name.
+name as a prefix for their droplet name if your looking at the DO
+control panel.
 
 After our environment is bootstrapped we can add additional machines
 to it via the the add-machine command, for example the following will
-add 5 machines with 2Gb each::
+add 3 machines with 2Gb each::
 
-  $ juju docean add-machine -n 5 --constraints="mem=2G"
-
-We can now use standard juju commands for deploying workloads::
-
-  $ juju deploy wordpress
-  $ juju deploy mysql
-  $ juju add-relation wordpress mysql
+  $ juju docean add-machine -n 2 --constraints="mem=2G, region=nyc2"
   $ juju status
 
-We can terminate allocated machines by their machine id. By default
-machines are forcibly terminated, which will also terminate any
-units on those machines, and is not dependent on the machine actually
-running.::
+  environment: docean
+  machines:
+    "0":
+      agent-state: started
+      agent-version: 1.17.2.1
+      dns-name: 162.243.115.78
+      instance-id: 'manual:'
+      series: precise
+      hardware: arch=amd64 cpu-cores=1 mem=2002M
+    "1":
+      agent-state: started
+      agent-version: 1.17.2.1
+      dns-name: 162.243.86.238
+      instance-id: manual:162.243.86.238
+      series: precise
+      hardware: arch=amd64 cpu-cores=1 mem=2002M
+    "2":
+      agent-state: down
+      agent-state-info: (started)
+      agent-version: 1.17.2.1
+      dns-name: 107.170.39.10
+      instance-id: manual:107.170.39.10
+      series: precise
+      hardware: arch=amd64 cpu-cores=1 mem=2002M
+  services: {}
 
-  $ juju docean terminate-machine 1 2 3
+We can now use standard juju commands for deploying service workloads aka
+charms::
+
+  $ juju deploy wordpress
+
+Without specifying the machine to place the workload on, the machine
+will automatically go to an unused machine within the environment.
+
+There are hundreds of available charms ready to be used, you can
+find out more about what's out there from http://jujucharms.com
+Or alternatively the 'plain' html version at
+http://manage.jujucharms.com/charms/precise
+
+We can use manual placement to deploy target particular machines::
+
+  $ juju deploy mysql --to=2
+
+And of course the real magic of juju comes in its ability to assemble
+these workloads together via relations like lego blocks::
+
+  $ juju add-relation wordpress mysql
+
+We can terminate allocated machines by their machine id. By default with the
+docean plugin, machines are forcibly terminated which will also terminate any
+service units on those machines::
+
+  $ juju docean terminate-machine 1 2
 
 And we can destroy the entire environment via::
 
   $ juju docean destroy-environment
 
-
 All commands have builtin help facilities and accept a -v option which will
 print verbose output while running.
+
+You can find out more about using from http://juju.ubuntu.com/docs
 
 Constraints
 ===========
@@ -138,8 +191,9 @@ This plugin accepts the standard `juju constraints`_
 
 Additionally it supports the following provider specific constraints.
 
-  - 'region' to denote the data center to utilize (currently 'ams2',
-    'nyc1', 'nyc2', 'sfo1', 'sg1') defaulting to 'nyc2'.
+  - 'region' to denote the digital ocean data center to utilize. All digitalocean
+    data centers are supported and various short hand aliases are defined. ie. valid
+    values include ams2, nyc1, nyc2, sfo1, sg1. The plugin defaults to nyc2.
 
   - 'transfer' to denote the terabytes of transfer included in the
     instance montly cost (integer size in gigabytes).
