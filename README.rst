@@ -129,8 +129,7 @@ add 3 machines with 2Gb each::
       series: precise
       hardware: arch=amd64 cpu-cores=1 mem=2002M
     "2":
-      agent-state: down
-      agent-state-info: (started)
+      agent-state: started
       agent-version: 1.17.2.1
       dns-name: 107.170.39.10
       instance-id: manual:107.170.39.10
