@@ -69,12 +69,12 @@ SSH Key
 +++++++
 
 An ssh key is required for use by this plugin and the public key
-must be uploaded to the digital ocean control panel.
+must be uploaded to the digital ocean control panel. By default
+all keys in the digital ocean account will be tried, so no user
+configuration is needed. A specific key to utilize can be specified with 
+the environment variable DO_SSH_KEY="key_name" where key_name is the name of 
+the key in the digital ocean management console.
 
-**Note** If you have a large number of ssh keys, ssh will only attempt
-a certain number of key logins before giving up, ideally you want to
-use one the keys it will select first. Its not possible at this moment
-to specify a private key to use for ssh. (see http://pad.lv/1270466)
 
 Juju Config
 +++++++++++

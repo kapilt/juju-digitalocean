@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='juju-docean',
-      version="0.0.12",
+      version="0.1.0",
       classifiers=[
           'Intended Audience :: Developers',
           'Programming Language :: Python',
@@ -10,7 +10,7 @@ setup(name='juju-docean',
       author_email='kapil.foss@gmail.com',
       description="Digital Ocean integration with juju",
       long_description=open("README.rst").read(),
-      url='http://github/kapilt/juju-docean',
+      url='https://github.com/kapilt/juju-digitalocean',
       license='BSD',
       packages=find_packages(),
       install_requires=["PyYAML", "dop", "requests"],

@@ -48,9 +48,10 @@ class DigitalOcean(object):
         return provider_conf
 
     def get_ssh_keys(self):
+        keys = self.client.all_ssh_keys()
         if 'ssh_key' in self.config:
-            return [self.config['ssh_key']]
-        return self.client.all_ssh_keys()
+            return [k for k in keys if k.name == self.config['ssh_key']]
+        return keys
 
     def get_instances(self):
         return self.client.show_active_droplets()
