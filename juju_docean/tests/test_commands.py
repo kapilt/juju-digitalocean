@@ -4,16 +4,15 @@ import tempfile
 import unittest
 import yaml
 
-from dop import client as dop
-
 from juju_docean.commands import (
     BaseCommand,
     Bootstrap,
     AddMachine,
     TerminateMachine,
-    DestroyEnvironment
-    )
+    DestroyEnvironment)
 
+
+from juju_docean.client import SSHKey, Droplet
 from juju_docean.exceptions import ConfigError
 from juju_docean.tests.base import Base
 
@@ -26,7 +25,8 @@ class CommandBase(Base):
         self.env = mock.MagicMock()
 
     def setup_env(self, conf=None):
-        self.provider.get_ssh_keys.return_value = [dop.SSHKey(1, 'abc')]
+        self.provider.get_ssh_keys.return_value = [
+            SSHKey.from_dict({'id': 1, 'name': 'abc'})]
         self.config.series = "precise"
         with tempfile.NamedTemporaryFile(delete=False) as f:
             self.config.get_env_conf.return_value = f.name
@@ -50,7 +50,8 @@ class BaseCommandTest(CommandBase):
 
     def test_get_ssh_keys(self):
         self.provider.get_ssh_keys.return_value = [
-            dop.SSHKey(1, 'abc'), dop.SSHKey(32, 'bcd')]
+            SSHKey.from_dict({'id': 1, 'name': 'abc'}),
+            SSHKey.from_dict({'id': 32, 'name': 'bcd'})]
         self.assertEqual(
             self.cmd.get_do_ssh_keys(),
             [1, 32])
@@ -114,7 +115,7 @@ class BootstrapTest(CommandBase):
         mock_ssh.check_ssh.return_value = True
         mock_ssh.update_instance.return_value = True
 
-        self.provider.get_instance.return_value = dop.Droplet.from_json(dict(
+        self.provider.get_instance.return_value = Droplet.from_dict(dict(
             id=2121,
             name='docean-13290123j13',
             ip_address="10.0.2.1"))
@@ -154,9 +155,9 @@ class TerminateMachineTest(CommandBase):
                     'instance-id': 'manual:ip_address'}
             }}
         self.provider.get_instances.return_value = [
-            dop.Droplet.from_json(dict(
+            Droplet.from_dict(dict(
                 id=221, name="docean-123123", ip_address="10.0.1.23")),
-            dop.Droplet.from_json(dict(
+            Droplet.from_dict(dict(
                 id=258, name="docena-209123", ip_address="10.0.1.103"))]
         self.config.options.machines = ["1"]
         self.cmd.run()
@@ -182,15 +183,17 @@ class DestroyEnvironmentTest(CommandBase):
                     'instance-id': 'manual:ip_address'}
             }}
         self.provider.get_instances.return_value = [
-            dop.Droplet.from_json(dict(
+            Droplet.from_dict(dict(
                 id=221, name="docean-123123", ip_address="10.0.1.23")),
-            dop.Droplet.from_json(dict(
+            Droplet.from_dict(dict(
                 id=258, name="docena-209123", ip_address="10.0.1.25"))]
 
         # Destroy Env has a sleep / mock it out.
         mock_time.sleep.return_value = None
         self.cmd.run()
-        self.provider.terminate_instance.assert_called_once_with(258)
+        self.assertEqual(
+            self.provider.terminate_instance.call_args_list,
+            [mock.call(258), mock.call(221)])
         self.env.terminate_machines.assert_called_once_with(['1'])
 
 if __name__ == '__main__':

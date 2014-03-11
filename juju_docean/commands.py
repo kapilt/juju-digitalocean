@@ -181,7 +181,6 @@ class DestroyEnvironment(TerminateMachine):
 
         # Manual provider needs machines removed prior to env destroy.
         def state_service_filter(m):
-            print 'considering', m
             if m == "0":
                 return False
             return True
