@@ -80,7 +80,10 @@ def main():
         level = logging.DEBUG
     else:
         level = logging.INFO
-    logging.basicConfig(level=level)
+    logging.basicConfig(
+        level=level,
+        datefmt="%Y/%m/%d %H:%M.%S",
+        format="%(asctime)s:%(levelname)s %(message)s")
     logging.getLogger('requests').setLevel(level=logging.WARNING)
 
     try:

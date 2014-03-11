@@ -146,13 +146,13 @@ class TerminateMachine(BaseCommand):
                      'instance_id': machines[m]['instance-id'],
                      'machine_id': m})
 
+        address_map = dict([(d.ip_address, d.id) for
+                            d in self.provider.get_instances()])
         if not remove:
-            return
+            return status, address_map
 
         log.info("Terminating machines %s",
                  " ".join([m['machine_id'] for m in remove]))
-        address_map = dict([(d.ip_address, d.id) for
-                            d in self.provider.get_instances()])
 
         for m in remove:
             instance_id = address_map.get(m['address'])
@@ -169,6 +169,8 @@ class TerminateMachine(BaseCommand):
         for result in self.runner.iter_results():
             pass
 
+        return status, address_map
+
 
 class DestroyEnvironment(TerminateMachine):
 
@@ -179,10 +181,13 @@ class DestroyEnvironment(TerminateMachine):
 
         # Manual provider needs machines removed prior to env destroy.
         def state_service_filter(m):
+            print 'considering', m
             if m == "0":
                 return False
             return True
-        self._terminate_machines(state_service_filter)
+
+        env_status, instance_map = self._terminate_machines(
+            state_service_filter)
 
         # sadness, machines are marked dead, but juju is async to
         # reality. either sleep (racy) or retry loop, 10s seems to
@@ -190,3 +195,11 @@ class DestroyEnvironment(TerminateMachine):
         time.sleep(10)
         log.info("Destroying environment")
         self.env.destroy_environment()
+
+        # Remove the state server.
+        bootstrap_host = env_status.get(
+            'machines', {}).get('0', {}).get('dns-name')
+        instance_id = instance_map.get(bootstrap_host)
+        if instance_id:
+            log.info("Terminating state server")
+            self.provider.terminate_instance(instance_id)

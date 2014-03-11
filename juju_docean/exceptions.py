@@ -27,3 +27,10 @@ class TimeoutError(ValueError):
 class ProviderError(Exception):
     """Instance could not be provisioned.
     """
+
+
+class ProviderAPIError(Exception):
+    """
+    """
+    def __init__(self, response):
+        self.response = response

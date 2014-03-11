@@ -23,7 +23,7 @@ class MachineOp(object):
 
 class MachineAdd(MachineOp):
 
-    timeout = 240
+    timeout = 360
     delay = 8
 
     def run(self):
@@ -44,7 +44,7 @@ class MachineAdd(MachineOp):
         """
         t = time.time()
         ssh.update_instance(instance.ip_address)
-        log.debug("Update precise instance %s complete in %0.2f",
+        log.debug("Update precise instance %s complete in %0.2f seconds",
                   instance.ip_address, time.time() - t)
 
     def verify_ssh(self, instance):

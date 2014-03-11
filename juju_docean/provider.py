@@ -3,7 +3,7 @@ import os
 import time
 
 from juju_docean.exceptions import ConfigError, ProviderError
-from dop import client as dop
+from juju_docean.client import Client
 
 log = logging.getLogger("juju.docean")
 
@@ -22,7 +22,7 @@ class DigitalOcean(object):
     def __init__(self, config, client=None):
         self.config = config
         if client is None:
-            self.client = dop.Client(
+            self.client = Client(
                 config['client_id'],
                 config['api_key'])
 
@@ -48,16 +48,16 @@ class DigitalOcean(object):
         return provider_conf
 
     def get_ssh_keys(self):
-        keys = self.client.all_ssh_keys()
+        keys = self.client.get_ssh_keys()
         if 'ssh_key' in self.config:
             return [k for k in keys if k.name == self.config['ssh_key']]
         return keys
 
     def get_instances(self):
-        return self.client.show_active_droplets()
+        return self.client.get_droplets()
 
     def get_instance(self, instance_id):
-        return self.client.show_droplet(instance_id)
+        return self.client.get_droplet(instance_id)
 
     def launch_instance(self, params):
         if not 'virtio' in params:
