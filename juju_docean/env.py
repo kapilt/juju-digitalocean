@@ -111,6 +111,11 @@ class Environment(object):
 
         try:
             self._run(cmd, env=env, capture_err=True)
+            # Make environments dir in juju home
+            try:
+                os.makedirs(os.path.join(self.config.juju_home, "environments"))
+            except OSError:
+                pass # dir exists
             # Copy over the jenv
             shutil.copy(
                 os.path.join(
