@@ -1,5 +1,6 @@
 import os
 import yaml
+import sys
 
 from juju_docean.env import Environment
 from juju_docean.exceptions import ConfigError
@@ -47,8 +48,13 @@ class Config(object):
 
     @property
     def juju_home(self):
-        return os.path.expanduser(
-            os.environ.get("JUJU_HOME", "~/.juju"))
+        jhome = os.environ.get("JUJU_HOME")
+        if jhome is not None:
+            return os.path.expanduser(jhome)
+        if sys.platform == "win32":
+            return os.path.join(
+                os.path.join('APPDATA'), "Juju")
+        return os.path.expanduser("~/.juju")
 
     def get_env_name(self):
         """Get the environment name.
