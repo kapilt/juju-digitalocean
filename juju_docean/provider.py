@@ -50,7 +50,8 @@ class DigitalOcean(object):
     def get_ssh_keys(self):
         keys = self.client.get_ssh_keys()
         if 'ssh_key' in self.config:
-            return [k for k in keys if k.name == self.config['ssh_key']]
+            keys = [k for k in keys if k.name == self.config['ssh_key']]
+        log.debug("Using DO ssh keys: %s" % (", ".join(k.name for k in keys)))
         return keys
 
     def get_instances(self):

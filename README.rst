@@ -1,7 +1,7 @@
 Juju Digital Ocean Provider
 ---------------------------
 
-.. image:: https://www.digitalocean.com/assets/v2/badges/digitalocean-vertical-eps.png
+.. image:: https://www.digitalocean.com/assets/images/logos-badges/png/DO_Logo_Horizontal_Blue-a2b16fb8.png
    :target: here_
 
 

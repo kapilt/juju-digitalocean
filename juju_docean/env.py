@@ -80,16 +80,31 @@ class Environment(object):
         Manual provider config keeps transient state in the form of
         bootstrap-host for its config.
 
-        A temporary JUJU_HOME is used to modify things.
+        A temporary JUJU_HOME is used to modify environments.yaml
         """
         env_name = self.config.get_env_name()
 
         # Prep a new juju home
         boot_home = os.path.join(
             self.config.juju_home, "boot-%s" % env_name)
-        os.makedirs(os.path.join(boot_home, 'environments'))
+
+        if not os.path.exists(boot_home):
+            os.makedirs(os.path.join(boot_home, 'environments'))
+
+        # Check that this installation has been used before.
+        jenv_dir = os.path.join(self.config.juju_home, 'environments')
+        if not os.path.exists(jenv_dir):
+            os.mkdir(jenv_dir)
+
+        ssh_key_dir = os.path.join(self.config.juju_home, 'ssh')
+
+        # If no keys, create juju ssh keys via side effect.
+        if not os.path.exists(ssh_key_dir):
+            self._run(["switch"])
+
+        # Use existing juju ssh keys when bootstrapping
         shutil.copytree(
-            os.path.join(self.config.juju_home, 'ssh'),
+            ssh_key_dir,
             os.path.join(boot_home, 'ssh'))
 
         # Updated env config with the bootstrap host.
@@ -111,11 +126,6 @@ class Environment(object):
 
         try:
             self._run(cmd, env=env, capture_err=True)
-            # Make environments dir in juju home
-            try:
-                os.makedirs(os.path.join(self.config.juju_home, "environments"))
-            except OSError:
-                pass # dir exists
             # Copy over the jenv
             shutil.copy(
                 os.path.join(
