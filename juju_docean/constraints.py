@@ -71,7 +71,7 @@ def parse_constraints(constraints):
         c[k.strip()] = v.strip()
 
     unknown = set(c).difference(
-        set(['region', 'transfer', 'cpu-cores', 'root-disk', 'mem']))
+        set(['region', 'transfer', 'cpu-cores', 'root-disk', 'mem', 'arch']))
     if unknown:
         raise ConstraintError("Unknown constraints %s" % (" ".join(unknown)))
 

@@ -5,7 +5,7 @@ Juju Digital Ocean Provider
    :target: here_
 
 
-This package provides a cli plugin for juju that allows for cli based
+This package provides a cli plugin for juju that allows for automated
 provisioning of machines on digital ocean. I like to call it JuDo :-)
 
 Digital ocean is linux vps provider utilizing kvm and ssd across
