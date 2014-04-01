@@ -38,6 +38,9 @@ REGIONS = [
 
 DEFAULT_REGION = 4
 
+
+ARCHES = ['amd64']
+
 # afaics, these are unavailable
 #
 #    {'name': 'Amsterdam 1 1', 'aliases': ['ams1']
@@ -99,6 +102,11 @@ def parse_constraints(constraints):
         if not d.isdigit():
             raise ConstraintError("Unknown cpu-cores size %s" % d)
         c['cpu'] = int(d)
+
+    if 'arch' in c:
+        d = c.pop('arch')
+        if not d in ARCHES:
+            raise ConstraintError("Unsupported arch %s" % d)
 
     if 'region' in c:
         for r in REGIONS:
