@@ -41,7 +41,7 @@ def setup_parser():
     _machine_opts(bootstrap)
     bootstrap.add_argument(
         "--upload-tools",
-        action="store_true", default=True,
+        action="store_true", default=False,
         help="upload local version of tools before bootstrapping")
     bootstrap.set_defaults(command=commands.Bootstrap)
 
