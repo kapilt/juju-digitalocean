@@ -32,5 +32,11 @@ class ProviderError(Exception):
 class ProviderAPIError(Exception):
     """
     """
-    def __init__(self, response):
+    def __init__(self, response, message):
         self.response = response
+        self.message = message
+
+    def __repr__(self):
+        return "<ProviderAPIError message:%s response:%r>" % (
+            self.message or "Unknown",
+            self.response.status_code)

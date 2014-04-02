@@ -89,7 +89,7 @@ class Client(object):
             raise ProviderAPIError(response, 'No json result found')
 
         if data['status'] != "OK":
-            return ProviderAPIError(
+            raise ProviderAPIError(
                 response, data.get('message', data.get('error_message')))
 
         return data
