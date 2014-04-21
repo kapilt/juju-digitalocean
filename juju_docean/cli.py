@@ -4,7 +4,8 @@ import sys
 
 from juju_docean.config import Config
 from juju_docean.constraints import IMAGE_MAP
-from juju_docean.exceptions import ConfigError, PrecheckError
+from juju_docean.exceptions import (
+    ConfigError, PrecheckError, ProviderAPIError)
 from juju_docean import commands
 
 
@@ -98,6 +99,8 @@ def main():
         config.connect_environment())
     try:
         cmd.run()
+    except ProviderAPIError, e:
+        print("Provider interaction error: %s" % str(e))
     except ConfigError, e:
         print("Configuration error: %s" % str(e))
         sys.exit(1)

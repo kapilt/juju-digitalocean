@@ -36,7 +36,7 @@ class ProviderAPIError(Exception):
         self.response = response
         self.message = message
 
-    def __repr__(self):
+    def __str__(self):
         return "<ProviderAPIError message:%s response:%r>" % (
             self.message or "Unknown",
             self.response.status_code)
