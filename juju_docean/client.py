@@ -103,3 +103,16 @@ class Client(object):
                 response, data.get('message', data.get('error_message')))
 
         return data
+
+
+def main():
+    import os
+    for instance in Client(os.environ["DO_CLIENT_ID"],
+                           os.environ["DO_API_KEY"]).get_droplets():
+        print(
+            instance.id, instance.name,
+            instance.status, instance.created_at)
+
+
+if __name__ == '__main__':
+    main()

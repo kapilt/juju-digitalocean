@@ -9,6 +9,8 @@ import yaml
 
 log = logging.getLogger("juju.docean")
 
+from juju_docean.constraints import SERIES_MAP
+
 
 class Environment(object):
 
@@ -123,6 +125,8 @@ class Environment(object):
         cmd = ['bootstrap', '--debug']
         if self.config.upload_tools:
             cmd.append("--upload-tools")
+            cmd.append('--series')
+            cmd.append("%s" % (",".join(SERIES_MAP.values())))
 
         try:
             self._run(cmd, env=env, capture_err=True)
