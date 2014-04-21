@@ -27,12 +27,22 @@ class Droplet(Entity):
     """
 
 
+class Image(Entity):
+    """
+    Attributes:, id, name, distribution, slug, public
+    """
+
+
 class Client(object):
 
     def __init__(self, client_id, api_key):
         self.client_id = client_id
         self.api_key = api_key
         self.api_url_base = 'https://api.digitalocean.com'
+
+    def get_images(self, filter="global"):
+        data = self.request("/images")
+        return map(Image.from_dict, data.get("images", []))
 
     def get_url(self, target):
         return "%s%s" % (self.api_url_base, target)

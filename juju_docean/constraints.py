@@ -20,13 +20,20 @@ for s in SIZE_MAP.values():
 
 SIZES_SORTED = (66, 63, 62, 64, 65, 61, 60, 70, 69, 68)
 
+# Would be nice to use ubuntu-distro-info, but portability.
+SERIES_MAP = {
+    '12-04': 'precise',
+    '13-10': 'saucy',
+    '14-04': 'trusty'}
+
+# Generated from constraints.images(do_client)
 IMAGE_MAP = {
-    'precise': 1505447,
-    '12.0.4': 1505447,
-    'raring': 350076,
-    '13.04': 350076,
-    'saucy': 1505699,
-    '13.10': 1505699}
+    '12.04': 3101045,
+    '13.10': 3101918,
+    '14.04': 3240036,
+    'precise': 3101045,
+    'saucy': 3101918,
+    'trusty': 3240036}
 
 # Record regions so we can offer nice aliases.
 REGIONS = [
@@ -139,3 +146,18 @@ def solve_constraints(constraints):
 
     raise ConstraintError("Could not match constraints %s" % (
         ", ".join(["%s=%s" % (k, v in constraints.items())])))
+
+
+def images(client):
+    images = {}
+    for i in client.get_images():
+        if not i.public:
+            continue
+        if not i.distribution == "Ubuntu":
+            continue
+
+        for s in SERIES_MAP:
+            if ("ubuntu-%s-x64" % s) == i.slug:
+                images[SERIES_MAP[s]] = i.id
+                images[s.replace('-', '.')] = i.id
+    return images

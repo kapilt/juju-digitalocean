@@ -21,3 +21,10 @@ class Base(unittest.TestCase):
             os.environ.update(original_environ)
 
         os.environ.update(kw)
+
+    @staticmethod
+    def have_do_api_keys():
+        return bool(
+            'DO_CLIENT_ID' in os.environ
+            and
+            'DO_API_KEY' in os.environ)
