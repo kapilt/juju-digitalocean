@@ -107,12 +107,19 @@ class Client(object):
 
 def main():
     import os
+    from juju_docean import constraints
     for instance in Client(os.environ["DO_CLIENT_ID"],
                            os.environ["DO_API_KEY"]).get_droplets():
-        print(
-            instance.id, instance.name,
-            instance.status, instance.created_at)
+        for r in constraints.REGIONS:
+            if instance.region_id == r['id']:
+                break
 
+        print("{:<9} {:<18} {:<8} {:<12} {:<13} {:<10}".format(
+            instance.id, instance.name,
+            instance.status,
+            instance.created_at[:-10],
+            r['name'],
+            instance.ip_address).strip())
 
 if __name__ == '__main__':
     main()
