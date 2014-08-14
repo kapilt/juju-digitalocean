@@ -44,7 +44,8 @@ class EnvironmentTest(Base):
 
         def verify_home(cmd, env, stderr=None):
             self.assertEqual(
-                cmd, ['juju', 'bootstrap', '--debug', '--upload-tools'])
+                cmd, ['juju', 'bootstrap', '--debug', '--upload-tools',
+                      "--series", "trusty,precise"])
             self.assertTrue(env['JUJU_HOME'].startswith(juju_home))
             self.assertTrue(env['JUJU_HOME'].endswith('boot-docean'))
             with open(os.path.join(env['JUJU_HOME'],

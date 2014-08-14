@@ -1,5 +1,7 @@
+import logging
 import mock
 import os
+import StringIO
 import tempfile
 import unittest
 import yaml
@@ -16,6 +18,13 @@ from juju_docean.client import SSHKey, Droplet
 from juju_docean.exceptions import ConfigError
 from juju_docean.tests.base import Base
 
+# Generated from constraints.images(do_client)
+IMAGE_MAP = {
+    'precise': 5588928,
+    '12.04': 5588928,
+    '14.04': 5141286,
+    'trusty': 5141286}
+
 
 class CommandBase(Base):
 
@@ -23,6 +32,7 @@ class CommandBase(Base):
         self.config = mock.MagicMock()
         self.provider = mock.MagicMock()
         self.env = mock.MagicMock()
+        self.output = self.capture_logging('juju.docean')
 
     def setup_env(self, conf=None):
         self.provider.get_ssh_keys.return_value = [
@@ -40,6 +50,22 @@ class CommandBase(Base):
             f.write(yaml.safe_dump(conf))
             f.flush()
             self.addCleanup(lambda: os.remove(f.name))
+
+    def capture_logging(self, name="", level=logging.INFO, log_file=None):
+        if log_file is None:
+            log_file = StringIO.StringIO()
+        log_handler = logging.StreamHandler(log_file)
+        logger = logging.getLogger(name)
+        logger.addHandler(log_handler)
+        old_logger_level = logger.level
+        logger.setLevel(level)
+
+        @self.addCleanup
+        def reset_logging():
+            logger.removeHandler(log_handler)
+            logger.setLevel(old_logger_level)
+
+        return log_file
 
 
 class BaseCommandTest(CommandBase):
@@ -106,8 +132,10 @@ class BootstrapTest(CommandBase):
         super(BootstrapTest, self).setUp()
         self.cmd = Bootstrap(self.config, self.provider, self.env)
 
+    @mock.patch('juju_docean.commands.get_images')
     @mock.patch('juju_docean.ops.ssh')
-    def test_bootstrap(self, mock_ssh):
+    def test_bootstrap(self, mock_ssh, mock_get_images):
+        mock_get_images.return_value = IMAGE_MAP
         self.setup_env()
         self.env.is_running.return_value = False
         self.config.series = "precise"
@@ -135,7 +163,9 @@ class AddMachineTest(CommandBase):
         super(AddMachineTest, self).setUp()
         self.cmd = AddMachine(self.config, self.provider, self.env)
 
-    def test_add_machine(self):
+    @mock.patch('juju_docean.commands.get_images')
+    def test_add_machine(self, mock_get_images):
+        mock_get_images.return_value = IMAGE_MAP
         self.setup_env()
         self.cmd.run()
 

@@ -23,17 +23,8 @@ SIZES_SORTED = (66, 63, 62, 64, 65, 61, 60, 70, 69, 68)
 # Would be nice to use ubuntu-distro-info, but portability.
 SERIES_MAP = {
     '12-04': 'precise',
-    '13-10': 'saucy',
     '14-04': 'trusty'}
 
-# Generated from constraints.images(do_client)
-IMAGE_MAP = {
-    '12.04': 3101045,
-    '13.10': 3101918,
-    '14.04': 3240036,
-    'precise': 3101045,
-    'saucy': 3101918,
-    'trusty': 3240036}
 
 # Record regions so we can offer nice aliases.
 REGIONS = [
@@ -41,7 +32,8 @@ REGIONS = [
     {'name': 'San Francisco 1', 'aliases': ['sfo1', 'sfo'], 'id': 3},
     {'name': 'New York 2', 'aliases': ['nyc2'], 'id': 4},
     {'name': 'Amsterdam 2', 'aliases': ['ams2', 'ams'], 'id': 5},
-    {'name': 'Singapore 1', 'aliases': ['sg', 'sg1'], 'id': 6}]
+    {'name': 'Singapore 1', 'aliases': ['sg', 'sg1'], 'id': 6},
+    {'name': 'London 1', 'aliases': ['lon1', 'lon', 'london'], 'id': 7}]
 
 DEFAULT_REGION = 4
 
@@ -148,7 +140,7 @@ def solve_constraints(constraints):
         ", ".join(["%s=%s" % (k, v in constraints.items())])))
 
 
-def images(client):
+def get_images(client):
     images = {}
     for i in client.get_images():
         if not i.public:

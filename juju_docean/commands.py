@@ -3,7 +3,7 @@ import time
 import uuid
 import yaml
 
-from juju_docean.constraints import IMAGE_MAP, solve_constraints
+from juju_docean.constraints import get_images, solve_constraints
 from juju_docean.exceptions import ConfigError, PrecheckError
 from juju_docean import ops
 from juju_docean.runner import Runner
@@ -22,7 +22,10 @@ class BaseCommand(object):
 
     def solve_constraints(self):
         size, region = solve_constraints(self.config.constraints)
-        return IMAGE_MAP[self.config.series], size, region
+        t = time.time()
+        image_map = get_images(self.provider.client)
+        log.debug("Looked up docean images in %0.2f seconds", time.time() - t)
+        return image_map[self.config.series], size, region
 
     def get_do_ssh_keys(self):
         return [k.id for k in self.provider.get_ssh_keys()]
@@ -74,7 +77,7 @@ class Bootstrap(BaseCommand):
     def run(self):
         keys = self.check_preconditions()
         image, size, region = self.solve_constraints()
-        log.info("Launching bootstrap host")
+        log.info("Launching bootstrap host (eta 3m)")
         params = dict(
             name="%s-0" % self.config.get_env_name(), image_id=image,
             size_id=size, region_id=region, ssh_key_ids=keys)

@@ -3,7 +3,7 @@ import logging
 import sys
 
 from juju_docean.config import Config
-from juju_docean.constraints import IMAGE_MAP
+from juju_docean.constraints import SERIES_MAP
 from juju_docean.exceptions import (
     ConfigError, PrecheckError, ProviderAPIError)
 from juju_docean import commands
@@ -21,7 +21,7 @@ def _machine_opts(parser):
         "--constraints", default="",
         help="Machine allocation criteria")
     parser.add_argument(
-        "--series", default="precise", choices=IMAGE_MAP.keys(),
+        "--series", default="precise", choices=SERIES_MAP.values(),
         help="OS Release for machine.")
 
 
@@ -67,6 +67,9 @@ def setup_parser():
         'destroy-environment',
         help="Destroy all machines in juju environment")
     _default_opts(destroy_environment)
+#    destroy_environment.add_argument(
+#        "--force", action="store_true", default=False,
+#        help="Irrespective of environment state, destroy all env machines")
     destroy_environment.set_defaults(command=commands.DestroyEnvironment)
 
     return parser

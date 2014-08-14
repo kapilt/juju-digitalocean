@@ -69,9 +69,12 @@ class Environment(object):
         cmd.extend(machines)
         return self._run(cmd)
 
-    def destroy_environment(self):
-        return self._run(['destroy-environment', "-y",
-                          self.config.get_env_name()])
+    def destroy_environment(self, force=False):
+        cmd = [
+            'destroy-environment', "-y", self.config.get_env_name()]
+        if force:
+            cmd.append('--force')
+        return self._run(cmd)
 
     def bootstrap(self):
         return self._run(['bootstrap', '-v'])
