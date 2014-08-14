@@ -28,7 +28,11 @@ class Environment(object):
             stderr = subprocess.STDOUT
         log.debug("Running juju command: %s", " ".join(args))
         try:
-            return subprocess.check_output(args, env=env, stderr=stderr)
+            if capture_err:
+                return subprocess.check_call(
+                    args, env=env, stderr=stderr)
+            return subprocess.check_output(args, env=env)
+
         except subprocess.CalledProcessError, e:
             log.error(
                 "Failed to run command %s\n%s",
@@ -61,8 +65,13 @@ class Environment(object):
         except socket.error:
             return False
 
-    def add_machine(self, location):
-        return self._run(['add-machine', location], capture_err=True)
+    def add_machine(self, location, key=None, debug=True):
+        ops = ['add-machine', location]
+        if key:
+            ops.extend(['--ssh-key', key])
+        if debug:
+            ops.append('--debug')
+        return self._run(ops, capture_err=True)
 
     def terminate_machines(self, machines):
         cmd = ['terminate-machine', '--force']
@@ -129,7 +138,7 @@ class Environment(object):
         if self.config.upload_tools:
             cmd.append("--upload-tools")
             cmd.append('--series')
-            cmd.append("%s" % (",".join(SERIES_MAP.values())))
+            cmd.append("%s" % (",".join(sorted(SERIES_MAP.values()))))
 
         try:
             self._run(cmd, env=env, capture_err=True)

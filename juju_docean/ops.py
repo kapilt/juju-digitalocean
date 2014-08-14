@@ -31,21 +31,7 @@ class MachineAdd(MachineOp):
         self.provider.wait_on(instance)
         instance = self.provider.get_instance(instance.id)
         self.verify_ssh(instance)
-        if self.options['series'] == 'precise':
-            self.update_image(instance)
         return instance
-
-    def update_image(self, instance):
-        """Workaround for Digital ocean precise images.
-
-        Those images are too old to be used out of the box without updating.
-        Ie. basic tasks like apt-get install python-software-properties failed.
-        Filed as upstream DO issue @ http://bit.ly/1gLwsgs
-        """
-        t = time.time()
-        ssh.update_instance(instance.ip_address)
-        log.debug("Update precise instance %s complete in %0.2f seconds",
-                  instance.ip_address, time.time() - t)
 
     def verify_ssh(self, instance):
         """Workaround for manual provisioning and ssh availability.
@@ -87,7 +73,13 @@ class MachineRegister(MachineAdd):
 
     def run(self):
         instance = super(MachineRegister, self).run()
-        machine_id = self.env.add_machine("ssh:root@%s" % instance.ip_address)
+        try:
+            machine_id = self.env.add_machine(
+                "ssh:root@%s" % instance.ip_address,
+                key=self.options.get('key'))
+        except:
+            self.provider.terminate_instance(instance.id)
+            raise
         return instance, machine_id
 
 

@@ -77,7 +77,7 @@ class Bootstrap(BaseCommand):
     def run(self):
         keys = self.check_preconditions()
         image, size, region = self.solve_constraints()
-        log.info("Launching bootstrap host (eta 3m)")
+        log.info("Launching bootstrap host (eta 5m)")
         params = dict(
             name="%s-0" % self.config.get_env_name(), image_id=image,
             size_id=size, region_id=region, ssh_key_ids=keys)
@@ -92,6 +92,7 @@ class Bootstrap(BaseCommand):
         except:
             self.provider.terminate_instance(instance.id)
             raise
+        log.info("Bootstrap complete")
 
     def check_preconditions(self):
         result = super(Bootstrap, self).check_preconditions()
@@ -118,8 +119,8 @@ class AddMachine(BaseCommand):
                 self.config.get_env_name(), uuid.uuid4().hex)
             self.runner.queue_op(
                 ops.MachineRegister(
-                    self.provider, self.env, params,
-                    series=self.config.series))
+                    self.provider, self.env, params, series=self.config.series,
+                    key=self.config.options.ssh_key))
 
         for (instance, machine_id) in self.runner.iter_results():
             log.info("Registered id:%s name:%s ip:%s as juju machine",

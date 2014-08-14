@@ -21,7 +21,7 @@ def _machine_opts(parser):
         "--constraints", default="",
         help="Machine allocation criteria")
     parser.add_argument(
-        "--series", default="precise", choices=SERIES_MAP.values(),
+        "--series", default="trusty", choices=SERIES_MAP.values(),
         help="OS Release for machine.")
 
 
@@ -54,6 +54,9 @@ def setup_parser():
         help="Number of machines to allocate")
     _default_opts(add_machine)
     _machine_opts(add_machine)
+    add_machine.add_argument(
+        "-k", "--ssh-key", default="",
+        help="Use specified key when adding machines")
     add_machine.set_defaults(command=commands.AddMachine)
 
     terminate_machine = subparsers.add_parser(
@@ -67,9 +70,9 @@ def setup_parser():
         'destroy-environment',
         help="Destroy all machines in juju environment")
     _default_opts(destroy_environment)
-#    destroy_environment.add_argument(
-#        "--force", action="store_true", default=False,
-#        help="Irrespective of environment state, destroy all env machines")
+    destroy_environment.add_argument(
+        "--force", action="store_true", default=False,
+        help="Irrespective of environment state, destroy all env machines")
     destroy_environment.set_defaults(command=commands.DestroyEnvironment)
 
     return parser
