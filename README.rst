@@ -109,7 +109,7 @@ control panel.
 
 After our environment is bootstrapped we can add additional machines
 to it via the the add-machine command, for example the following will
-add 3 machines with 2Gb each::
+add 2 additional machines with 2Gb each::
 
   $ juju docean add-machine -n 2 --constraints="mem=2G, region=nyc2"
   $ juju status
