@@ -132,7 +132,7 @@ class BootstrapTest(CommandBase):
         super(BootstrapTest, self).setUp()
         self.cmd = Bootstrap(self.config, self.provider, self.env)
 
-    @mock.patch('juju_docean.commands.get_images')
+    @mock.patch('juju_docean.constraints.get_images')
     @mock.patch('juju_docean.ops.ssh')
     def test_bootstrap(self, mock_ssh, mock_get_images):
         mock_get_images.return_value = IMAGE_MAP
@@ -150,8 +150,6 @@ class BootstrapTest(CommandBase):
         self.cmd.run()
 
         mock_ssh.check_ssh.assert_called_once_with('10.0.2.1')
-        # no longer updating digital ocean instances
-        #mock_ssh.update_instance.assert_called_once_with('10.0.2.1')
 
     # TODO
     # test existing named host / ie precondition check for live env
@@ -164,7 +162,7 @@ class AddMachineTest(CommandBase):
         super(AddMachineTest, self).setUp()
         self.cmd = AddMachine(self.config, self.provider, self.env)
 
-    @mock.patch('juju_docean.commands.get_images')
+    @mock.patch('juju_docean.constraints.get_images')
     def test_add_machine(self, mock_get_images):
         mock_get_images.return_value = IMAGE_MAP
         self.setup_env()
@@ -201,8 +199,30 @@ class DestroyEnvironmentTest(CommandBase):
         super(DestroyEnvironmentTest, self).setUp()
         self.cmd = DestroyEnvironment(self.config, self.provider, self.env)
 
+    def test_destroy_environment_force(self):
+        self.config.options.force = True
+        self.setup_env()
+        self.provider.get_instances.return_value = [
+            Droplet.from_dict(dict(
+                id=220, name="doceanabc", ip_address="10.0.1.19")),
+            Droplet.from_dict(dict(
+                id=221, name="docean-123123", ip_address="10.0.1.23")),
+            Droplet.from_dict(dict(
+                id=258, name="docean-209123", ip_address="10.0.1.25")),
+            Droplet.from_dict(dict(
+                id=233, name="mary", ip_address="10.0.1.32")),
+            Droplet.from_dict(dict(
+                id=234, name="loug", ip_address="10.0.1.18"))]
+
+        self.cmd.run()
+        self.assertEqual(
+            self.provider.terminate_instance.call_args_list,
+            [mock.call(221), mock.call(258)])
+        self.env.destroy_environment_jenv.assert_called_once()
+
     @mock.patch('juju_docean.commands.time')
     def test_destroy_environment(self, mock_time):
+        self.config.options.force = False
         self.setup_env()
         self.env.status.return_value = {
             'machines': {
@@ -229,6 +249,7 @@ class DestroyEnvironmentTest(CommandBase):
 
     @mock.patch('juju_docean.commands.time')
     def test_destroy_environment_with_missing_iaas_machine(self, mock_time):
+        self.config.options.force = False
         self.setup_env()
         self.env.status.return_value = {
             'machines': {

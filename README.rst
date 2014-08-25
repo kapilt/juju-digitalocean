@@ -164,7 +164,8 @@ these workloads together via relations like lego blocks::
 
 We can list all machines in digitalocean that are part of the juju environment 
 with the list-machines command. This directly queries the digital ocean api and 
-does not interact with juju api::
+does not interact with juju api. It also takes a --all option to list all machines
+in digitalocean account (irrespective of environment).::
 
   $ juju docean list-machines
 

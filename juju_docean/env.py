@@ -17,27 +17,20 @@ class Environment(object):
     def __init__(self, config):
         self.config = config
 
-    def _run(self, command, env=None, capture_err=False, ignore_err=False):
+    def _run(self, command, env=None, capture_err=False):
         if env is None:
             env = dict(os.environ)
         env["JUJU_ENV"] = self.config.get_env_name()
         args = ['juju']
         args.extend(command)
-        stderr = None
-        if capture_err:
-            stderr = subprocess.STDOUT
         log.debug("Running juju command: %s", " ".join(args))
         try:
             if capture_err:
                 return subprocess.check_call(
-                    args, env=env, stderr=stderr)
-            if ignore_err:
-                stderr = subprocess.STDOUT
-            return subprocess.check_output(args, env=env, stderr=stderr)
-
+                    args, env=env, stderr=subprocess.STDOUT)
+            return subprocess.check_output(
+                args, env=env, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError, e:
-            if ignore_err:
-                return
             log.error(
                 "Failed to run command %s\n%s",
                 ' '.join(args), e.output)
@@ -76,19 +69,31 @@ class Environment(object):
         if debug:
             ops.append('--debug')
 
-        return self._run(ops, capture_err=True)
+        return self._run(ops, capture_err=debug)
 
     def terminate_machines(self, machines):
         cmd = ['terminate-machine', '--force']
         cmd.extend(machines)
         return self._run(cmd)
 
-    def destroy_environment(self, force=False):
+    def destroy_environment(self):
         cmd = [
             'destroy-environment', "-y", self.config.get_env_name()]
-        if force:
-            cmd.append('--force')
-        return self._run(cmd, ignore_err=force)
+        return self._run(cmd)
+
+    def destroy_environment_jenv(self):
+        """Force remove client cache of environment by deleting jenv.
+
+        Specifically this is for when we force/fast destroy an environment
+        by deleting all the underlying iaas resources. Juju cli with --force
+        will work, but will wait for a timeout to connect to the state server
+        before doing the same.
+        """
+        env_name = self.config.get_env_name()
+        jenv_path = os.path.join(
+            self.config.juju_home, "environments", "%s.jenv" % env_name)
+        if os.path.exists(jenv_path):
+            os.remove(jenv_path)
 
     def bootstrap(self):
         return self._run(['bootstrap', '-v'])
@@ -146,7 +151,6 @@ class Environment(object):
             cmd.append("%s" % (",".join(sorted(SERIES_MAP.values()))))
 
         capture_err = self.config.verbose and True or False
-
         try:
             self._run(cmd, env=env, capture_err=capture_err)
             # Copy over the jenv

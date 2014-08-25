@@ -77,7 +77,7 @@ class Bootstrap(BaseCommand):
     def run(self):
         keys = self.check_preconditions()
         image, size, region = self.solve_constraints()
-        log.info("Launching bootstrap host (eta 5m)")
+        log.info("Launching bootstrap host (eta 5m)...")
         params = dict(
             name="%s-0" % self.config.get_env_name(), image_id=image,
             size_id=size, region_id=region, ssh_key_ids=keys)
@@ -86,13 +86,13 @@ class Bootstrap(BaseCommand):
             self.provider, self.env, params, series=self.config.series)
         instance = op.run()
 
-        log.info("Bootstrapping environment")
+        log.info("Bootstrapping environment...")
         try:
             self.env.bootstrap_jenv(instance.ip_address)
         except:
             self.provider.terminate_instance(instance.id)
             raise
-        log.info("Bootstrap complete")
+        log.info("Bootstrap complete.")
 
     def check_preconditions(self):
         result = super(Bootstrap, self).check_preconditions()
@@ -110,8 +110,9 @@ class ListMachines(BaseCommand):
         header = "{:<8} {:<18} {:<5} {:<8} {:<12} {:<6} {:<10}".format(
             "Id", "Name", "Size", "Status", "Created", "Region", "Address")
 
+        allmachines = self.config.options
         for m in self.provider.get_instances():
-            if not m.name.startswith('%s-' % env_name):
+            if not allmachines and not m.name.startswith('%s-' % env_name):
                 continue
 
             if header:
@@ -139,7 +140,7 @@ class AddMachine(BaseCommand):
     def run(self):
         keys = self.check_preconditions()
         image, size, region = self.solve_constraints()
-        log.info("Launching %d instances", self.config.num_machines)
+        log.info("Launching %d instances...", self.config.num_machines)
 
         template = dict(
             image_id=image, size_id=size, region_id=region, ssh_key_ids=keys)
@@ -200,11 +201,14 @@ class TerminateMachine(BaseCommand):
                 # find in provider. Remove it from state so destroy
                 # can proceed.
                 env_only = True
+                instance_id = None
+            else:
+                instance_id = instance.id
             self.runner.queue_op(
                 ops.MachineDestroy(
                     self.provider, self.env, {
                         'machine_id': m['machine_id'],
-                        'instance_id': instance.id},
+                        'instance_id': instance_id},
                     env_only=env_only))
         for result in self.runner.iter_results():
             pass
@@ -243,16 +247,18 @@ class DestroyEnvironment(TerminateMachine):
         # Remove the state server.
         bootstrap_host = env_status.get(
             'machines', {}).get('0', {}).get('dns-name')
-        instance_id = instance_map.get(bootstrap_host)
-        if instance_id:
+        instance = instance_map.get(bootstrap_host)
+        if instance:
             log.info("Terminating state server")
-            self.provider.terminate_instance(instance_id)
+            self.provider.terminate_instance(instance.id)
+        log.info("Environment Destroyed")
 
     def force_environment_destroy(self):
         env_name = self.config.get_env_name()
         env_machines = [m for m in self.provider.get_instances()
                         if m.name.startswith("%s-" % env_name)]
 
+        log.info("Destroying environment")
         for m in env_machines:
             self.runner.queue_op(
                 ops.MachineDestroy(
@@ -262,6 +268,6 @@ class DestroyEnvironment(TerminateMachine):
         for result in self.runner.iter_results():
             pass
 
-        log.info("Destroying environment")
-        output = self.env.destroy_environment(True)
-        print output
+        # Fast destroy the client cache by removing the jenv file.
+        self.env.destroy_environment_jenv()
+        log.info("Environment Destroyed")

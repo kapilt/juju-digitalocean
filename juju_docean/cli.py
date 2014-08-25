@@ -63,6 +63,9 @@ def setup_parser():
         'list-machines',
         help="List machines allocated to an environment.")
     _default_opts(list_machines)
+    list_machines.add_argument(
+        "-a", "--all", action="store_true", default=False,
+        help="Display all droplets in digital ocean.")
     list_machines.set_defaults(command=commands.ListMachines)
 
     terminate_machine = subparsers.add_parser(
