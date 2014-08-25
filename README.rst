@@ -161,12 +161,24 @@ these workloads together via relations like lego blocks::
 
   $ juju add-relation wordpress mysql
 
+We can list all machines in digitalocean that are part of the juju environment 
+with the list-machines command. This directly queries the digital ocean api and 
+does not interact with juju api:
+
+  $ juju docean list-machines
+
+  Id       Name               Size  Status   Created      Region Address   
+  2442349  ocean-0            512MB active   2014-08-25   nyc2   162.243.123.121
+  2442360  ocean-ef19ad5cc... 512MB active   2014-08-25   nyc2   162.243.51.21
+  2442361  ocean-145bf7a80... 512MB active   2014-08-25   nyc2   104.131.201.155
+  2442402  ocean-a9678a03e... 2GB   active   2014-08-25   nyc3   104.131.43.243
+  2442403  ocean-f35ffedd9... 2GB   active   2014-08-25   nyc3   104.131.43.242
+
 We can terminate allocated machines by their machine id. By default with the
 docean plugin, machines are forcibly terminated which will also terminate any
 service units on those machines::
 
   $ juju docean terminate-machine 1 2
-
 
 And we can destroy the entire environment via::
 
@@ -176,6 +188,7 @@ All commands have builtin help facilities and accept a -v option which will
 print verbose output while running.
 
 You can find out more about using from http://juju.ubuntu.com/docs
+
 
 Constraints
 ===========
