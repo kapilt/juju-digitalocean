@@ -21,14 +21,15 @@ You can find out more about juju at its home page. http://juju.ubuntu.com
 Install
 =======
 
-**This plugin requires a development version of juju (>= 1.17.2)**
+**This plugin requires a version of juju >= 1.18.0**
 
-A usable dev version of juju is available via the dev ppa::
+A usable version of juju is available out of the box in ubuntu 14.04 and later 
+versions. For earlier versions of ubuntu, please use the stable ppa::
 
-  $ sudo add-apt-repository ppa:juju/devel
+  $ sudo add-apt-repository ppa:juju/stable
   $ apt-get update && apt-get install juju
   $ juju version
-  1.17.2-saucy-amd64
+  1.20.4-precise-amd64
 
 Plugin installation is done via pip/easy_install which is the python language
 package managers, its available by default on ubuntu. Also recommended
