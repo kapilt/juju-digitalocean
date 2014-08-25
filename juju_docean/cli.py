@@ -59,6 +59,12 @@ def setup_parser():
         help="Use specified key when adding machines")
     add_machine.set_defaults(command=commands.AddMachine)
 
+    list_machines = subparsers.add_parser(
+        'list-machines',
+        help="List machines allocated to an environment.")
+    _default_opts(list_machines)
+    list_machines.set_defaults(command=commands.ListMachines)
+
     terminate_machine = subparsers.add_parser(
         "terminate-machine",
         help="Terminate machine")

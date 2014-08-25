@@ -86,6 +86,9 @@ class MachineRegister(MachineAdd):
 class MachineDestroy(MachineOp):
 
     def run(self):
-        self.env.terminate_machines([self.params['machine_id']])
+        if not self.options.get('iaas_only'):
+            self.env.terminate_machines([self.params['machine_id']])
+        if self.options.get('env_only'):
+            return
         log.debug("Destroying instance %s", self.params['instance_id'])
         self.provider.terminate_instance(self.params['instance_id'])

@@ -16,6 +16,7 @@ class EnvironmentTest(Base):
     @mock.patch('subprocess.check_output')
     def test_bootstrap_jenv(self, run_juju):
         # Setup some mocks
+        self.config.verbose = False
         self.config.get_env_name.return_value = "docean"
         self.config.juju_home = juju_home = self.mkdir()
         self.config.get_env_conf.return_value = os.path.join(

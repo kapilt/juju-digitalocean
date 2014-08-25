@@ -17,7 +17,7 @@ class Environment(object):
     def __init__(self, config):
         self.config = config
 
-    def _run(self, command, env=None, capture_err=False):
+    def _run(self, command, env=None, capture_err=False, ignore_err=False):
         if env is None:
             env = dict(os.environ)
         env["JUJU_ENV"] = self.config.get_env_name()
@@ -31,9 +31,13 @@ class Environment(object):
             if capture_err:
                 return subprocess.check_call(
                     args, env=env, stderr=stderr)
-            return subprocess.check_output(args, env=env)
+            if ignore_err:
+                stderr = subprocess.STDOUT
+            return subprocess.check_output(args, env=env, stderr=stderr)
 
         except subprocess.CalledProcessError, e:
+            if ignore_err:
+                return
             log.error(
                 "Failed to run command %s\n%s",
                 ' '.join(args), e.output)
@@ -65,12 +69,13 @@ class Environment(object):
         except socket.error:
             return False
 
-    def add_machine(self, location, key=None, debug=True):
+    def add_machine(self, location, key=None, debug=False):
         ops = ['add-machine', location]
         if key:
             ops.extend(['--ssh-key', key])
         if debug:
             ops.append('--debug')
+
         return self._run(ops, capture_err=True)
 
     def terminate_machines(self, machines):
@@ -83,7 +88,7 @@ class Environment(object):
             'destroy-environment', "-y", self.config.get_env_name()]
         if force:
             cmd.append('--force')
-        return self._run(cmd)
+        return self._run(cmd, ignore_err=force)
 
     def bootstrap(self):
         return self._run(['bootstrap', '-v'])
@@ -140,8 +145,10 @@ class Environment(object):
             cmd.append('--series')
             cmd.append("%s" % (",".join(sorted(SERIES_MAP.values()))))
 
+        capture_err = self.config.verbose and True or False
+
         try:
-            self._run(cmd, env=env, capture_err=True)
+            self._run(cmd, env=env, capture_err=capture_err)
             # Copy over the jenv
             shutil.copy(
                 os.path.join(

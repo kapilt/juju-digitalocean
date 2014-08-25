@@ -167,6 +167,7 @@ service units on those machines::
 
   $ juju docean terminate-machine 1 2
 
+
 And we can destroy the entire environment via::
 
   $ juju docean destroy-environment

@@ -3,7 +3,7 @@ import time
 import uuid
 import yaml
 
-from juju_docean.constraints import get_images, solve_constraints
+from juju_docean import constraints
 from juju_docean.exceptions import ConfigError, PrecheckError
 from juju_docean import ops
 from juju_docean.runner import Runner
@@ -21,9 +21,9 @@ class BaseCommand(object):
         self.runner = Runner()
 
     def solve_constraints(self):
-        size, region = solve_constraints(self.config.constraints)
+        size, region = constraints.solve_constraints(self.config.constraints)
         t = time.time()
-        image_map = get_images(self.provider.client)
+        image_map = constraints.get_images(self.provider.client)
         log.debug("Looked up docean images in %0.2f seconds", time.time() - t)
         return image_map[self.config.series], size, region
 
@@ -103,6 +103,37 @@ class Bootstrap(BaseCommand):
         return result
 
 
+class ListMachines(BaseCommand):
+
+    def run(self):
+        env_name = self.config.get_env_name()
+        header = "{:<8} {:<18} {:<5} {:<8} {:<12} {:<6} {:<10}".format(
+            "Id", "Name", "Size", "Status", "Created", "Region", "Address")
+
+        for m in self.provider.get_instances():
+            if not m.name.startswith('%s-' % env_name):
+                continue
+
+            if header:
+                print(header)
+                header = None
+
+            for r in constraints.REGIONS:
+                if m.region_id == r['id']:
+                    break
+            name = m.name
+            if len(name) > 18:
+                name = name[:15] + "..."
+            print("{:<8} {:<18} {:<5} {:<8} {:<12} {:<6} {:<10}".format(
+                m.id,
+                name,
+                constraints.SIZE_MAP.get(m.size_id, {}).get('name', "Unknown"),
+                m.status,
+                m.created_at[:-10],
+                r['aliases'][0],
+                m.ip_address).strip())
+
+
 class AddMachine(BaseCommand):
 
     def run(self):
@@ -135,7 +166,7 @@ class TerminateMachine(BaseCommand):
         self.check_preconditions()
         self._terminate_machines(lambda x: x in self.config.options.machines)
 
-    def _terminate_machines(self, remove_machines):
+    def _terminate_machines(self, machine_filter):
         log.debug("Checking for machines to terminate")
         status = self.env.status()
         machines = status.get('machines', {})
@@ -144,13 +175,13 @@ class TerminateMachine(BaseCommand):
         # else it defaults to ip, and we have to disambiguate.
         remove = []
         for m in machines:
-            if remove_machines(m):
+            if machine_filter(m):
                 remove.append(
                     {'address': machines[m]['dns-name'],
                      'instance_id': machines[m]['instance-id'],
                      'machine_id': m})
 
-        address_map = dict([(d.ip_address, d.id) for
+        address_map = dict([(d.ip_address, d) for
                             d in self.provider.get_instances()])
         if not remove:
             return status, address_map
@@ -159,17 +190,22 @@ class TerminateMachine(BaseCommand):
                  " ".join([m['machine_id'] for m in remove]))
 
         for m in remove:
-            instance_id = address_map.get(m['address'])
-            if instance_id is None:
+            instance = address_map.get(m['address'])
+            env_only = False  # Remove from only env or also provider.
+            if instance is None:
                 log.warning(
                     "Couldn't resolve machine %s's address %s to instance" % (
                         m['machine_id'], m['address']))
-                continue
+                # We have a machine in juju state that we couldn't
+                # find in provider. Remove it from state so destroy
+                # can proceed.
+                env_only = True
             self.runner.queue_op(
                 ops.MachineDestroy(
                     self.provider, self.env, {
                         'machine_id': m['machine_id'],
-                        'instance_id': instance_id}))
+                        'instance_id': instance.id},
+                    env_only=env_only))
         for result in self.runner.iter_results():
             pass
 
@@ -182,12 +218,16 @@ class DestroyEnvironment(TerminateMachine):
         """Destroy environment.
         """
         self.check_preconditions()
+        force = self.config.options.force
 
         # Manual provider needs machines removed prior to env destroy.
         def state_service_filter(m):
             if m == "0":
                 return False
             return True
+
+        if force:
+            return self.force_environment_destroy()
 
         env_status, instance_map = self._terminate_machines(
             state_service_filter)
@@ -196,6 +236,7 @@ class DestroyEnvironment(TerminateMachine):
         # reality. either sleep (racy) or retry loop, 10s seems to
         # plenty of time.
         time.sleep(10)
+
         log.info("Destroying environment")
         self.env.destroy_environment()
 
@@ -206,3 +247,21 @@ class DestroyEnvironment(TerminateMachine):
         if instance_id:
             log.info("Terminating state server")
             self.provider.terminate_instance(instance_id)
+
+    def force_environment_destroy(self):
+        env_name = self.config.get_env_name()
+        env_machines = [m for m in self.provider.get_instances()
+                        if m.name.startswith("%s-" % env_name)]
+
+        for m in env_machines:
+            self.runner.queue_op(
+                ops.MachineDestroy(
+                    self.provider, self.env, {'instance_id': m.id},
+                    iaas_only=True))
+
+        for result in self.runner.iter_results():
+            pass
+
+        log.info("Destroying environment")
+        output = self.env.destroy_environment(True)
+        print output

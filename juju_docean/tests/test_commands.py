@@ -150,7 +150,8 @@ class BootstrapTest(CommandBase):
         self.cmd.run()
 
         mock_ssh.check_ssh.assert_called_once_with('10.0.2.1')
-        mock_ssh.update_instance.assert_called_once_with('10.0.2.1')
+        # no longer updating digital ocean instances
+        #mock_ssh.update_instance.assert_called_once_with('10.0.2.1')
 
     # TODO
     # test existing named host / ie precondition check for live env
@@ -225,6 +226,37 @@ class DestroyEnvironmentTest(CommandBase):
             self.provider.terminate_instance.call_args_list,
             [mock.call(258), mock.call(221)])
         self.env.terminate_machines.assert_called_once_with(['1'])
+
+    @mock.patch('juju_docean.commands.time')
+    def test_destroy_environment_with_missing_iaas_machine(self, mock_time):
+        self.setup_env()
+        self.env.status.return_value = {
+            'machines': {
+                '0': {
+                    'dns-name': '10.0.1.23',
+                    'instance-id': 'manual:ip_address'},
+                '1': {
+                    'dns-name': '10.0.1.25',
+                    'instance-id': 'manual:ip_address'},
+                '2': {
+                    'dns-name': '10.0.1.27',
+                    'instance-id': 'manual:ip_address'}
+            }}
+        self.provider.get_instances.return_value = [
+            Droplet.from_dict(dict(
+                id=221, name="docean-123123", ip_address="10.0.1.23")),
+            Droplet.from_dict(dict(
+                id=258, name="docena-209123", ip_address="10.0.1.25"))]
+
+        # Destroy Env has a sleep / mock it out.
+        mock_time.sleep.return_value = None
+        self.cmd.run()
+        self.assertEqual(
+            self.provider.terminate_instance.call_args_list,
+            [mock.call(258), mock.call(221)])
+        self.assertEqual(
+            self.env.terminate_machines.call_args_list,
+            [mock.call(['1']), mock.call(['2'])])
 
 if __name__ == '__main__':
     unittest.main()

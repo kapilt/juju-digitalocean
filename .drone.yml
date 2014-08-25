@@ -1,0 +1,12 @@
+image: python2.7
+script:
+  - python setup.py develop
+  - python -m unittest.discover -v
+notify:
+  irc:
+    nick: orealms-drone-ci
+    channel: juju-tosca
+    server: irc.freenode.net
+    on_started: true
+    on_failure: true
+    on_success: true

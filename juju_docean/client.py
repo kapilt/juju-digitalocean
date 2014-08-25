@@ -1,3 +1,5 @@
+import os
+
 from juju_docean.exceptions import ProviderAPIError
 
 import requests
@@ -33,12 +35,18 @@ class Image(Entity):
     """
 
 
+class Region(Entity):
+    """
+    Attributes: slug, id, name
+    """
+
+
 class Client(object):
 
     def __init__(self, client_id, api_key):
         self.client_id = client_id
         self.api_key = api_key
-        self.api_url_base = 'https://api.digitalocean.com'
+        self.api_url_base = 'https://api.digitalocean.com/v1'
 
     def get_images(self, filter="global"):
         data = self.request("/images")
@@ -58,6 +66,10 @@ class Client(object):
     def get_droplet(self, droplet_id):
         data = self.request("/droplets/%s" % (droplet_id))
         return Droplet.from_dict(data.get('droplet', {}))
+
+    def get_regions(self):
+        data = self.request("/regions")
+        return map(Region.from_dict, data.get("regions", []))
 
     def create_droplet(self, name, size_id, image_id, region_id,
                        ssh_key_ids=None, private_networking=False,
@@ -104,22 +116,20 @@ class Client(object):
 
         return data
 
+    @classmethod
+    def connect(cls):
+        client_id = os.environ.get('DO_CLIENT_ID')
+        key = os.environ.get('DO_API_KEY')
+        if not client_id or not key:
+            raise KeyError("Missing api credentials")
+        return cls(client_id, key)
+
 
 def main():
-    import os
-    from juju_docean import constraints
-    for instance in Client(os.environ["DO_CLIENT_ID"],
-                           os.environ["DO_API_KEY"]).get_droplets():
-        for r in constraints.REGIONS:
-            if instance.region_id == r['id']:
-                break
+    import code
+    client = Client.connect()
+    code.interact(local={'client': client})
 
-        print("{:<9} {:<18} {:<8} {:<12} {:<13} {:<10}".format(
-            instance.id, instance.name,
-            instance.status,
-            instance.created_at[:-10],
-            r['name'],
-            instance.ip_address).strip())
 
 if __name__ == '__main__':
     main()

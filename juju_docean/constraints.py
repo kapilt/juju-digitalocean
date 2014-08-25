@@ -32,8 +32,10 @@ REGIONS = [
     {'name': 'San Francisco 1', 'aliases': ['sfo1', 'sfo'], 'id': 3},
     {'name': 'New York 2', 'aliases': ['nyc2'], 'id': 4},
     {'name': 'Amsterdam 2', 'aliases': ['ams2', 'ams'], 'id': 5},
-    {'name': 'Singapore 1', 'aliases': ['sg', 'sg1'], 'id': 6},
-    {'name': 'London 1', 'aliases': ['lon1', 'lon', 'london'], 'id': 7}]
+    {'name': 'Singapore 1', 'aliases': ['sgp1', 'sgp', 'sg'], 'id': 6},
+    {'name': 'London 1', 'aliases': ['lon1', 'lon', 'london'], 'id': 7},
+    {'name': 'New York 3', 'aliases': ['nyc3'], 'id': 8}]
+
 
 DEFAULT_REGION = 4
 
