@@ -14,6 +14,7 @@ setup(name='juju-docean',
       license='BSD',
       packages=find_packages(),
       install_requires=["PyYAML", "requests"],
+      tests_require=["nose", "mock"],
       entry_points={
           "console_scripts": [
               'juju-docean = juju_docean.cli:main']},

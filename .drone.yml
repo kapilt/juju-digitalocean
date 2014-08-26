@@ -1,4 +1,4 @@
 image: python2.7
 script:
   - python setup.py develop
-  - python -m unittest.discover -v
+  - nosetests -v
