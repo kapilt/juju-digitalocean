@@ -110,7 +110,7 @@ class ListMachines(BaseCommand):
         header = "{:<8} {:<18} {:<5} {:<8} {:<12} {:<6} {:<10}".format(
             "Id", "Name", "Size", "Status", "Created", "Region", "Address")
 
-        allmachines = self.config.options
+        allmachines = self.config.options.all
         for m in self.provider.get_instances():
             if not allmachines and not m.name.startswith('%s-' % env_name):
                 continue
