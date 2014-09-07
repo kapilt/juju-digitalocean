@@ -1,4 +1,9 @@
 *.pyc
+bin
+lib
+local
+man
+include
 build
 dist
 *.egg-info

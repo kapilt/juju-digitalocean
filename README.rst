@@ -162,10 +162,10 @@ these workloads together via relations like lego blocks::
 
   $ juju add-relation wordpress mysql
 
-We can list all machines in digitalocean that are part of the juju environment 
-with the list-machines command. This directly queries the digital ocean api and 
-does not interact with juju api. It also takes a --all option to list all machines
-in digitalocean account (irrespective of environment).::
+We can list all machines in digitalocean that are part of the juju 
+environment with the list-machines command. This directly queries the digital 
+ocean api and does not interact with juju api. It also takes a --all option to 
+list all machines in digitalocean account (irrespective of environment).::
 
   $ juju docean list-machines
 
@@ -185,6 +185,10 @@ service units on those machines::
 And we can destroy the entire environment via::
 
   $ juju docean destroy-environment
+
+destroy-environment also takes a --force option which only uses the
+digital ocean api. Its helpful if state server or other machines are 
+killed independently of juju.
 
 All commands have builtin help facilities and accept a -v option which will
 print verbose output while running.
