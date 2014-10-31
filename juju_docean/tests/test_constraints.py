@@ -10,7 +10,7 @@ class ConstraintTests(Base):
         ("region=ams, root-disk=100G", (61, 5)),
         ("region=nyc2, mem=24G", (60, 4)),
         ("region=nyc2, mem=24G, arch=amd64", (60, 4)),
-        ("", (66, 4))]
+        ("", (66, 8))]
 
     def test_constraint_solving(self):
         for constraints, solution in self.cases:

@@ -37,7 +37,7 @@ REGIONS = [
     {'name': 'New York 3', 'aliases': ['nyc3'], 'id': 8}]
 
 
-DEFAULT_REGION = 4
+DEFAULT_REGION = 8
 
 
 ARCHES = ['amd64']
