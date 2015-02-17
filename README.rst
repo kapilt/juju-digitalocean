@@ -80,8 +80,8 @@ the key in the digital ocean management console.
 Juju Config
 +++++++++++
 
-Next let's configure a juju environment for digital ocean, add an
-a null provider environment to 'environments.yaml', for example::
+Next let's configure a juju environment for digital ocean, add
+a manual provider environment to 'environments.yaml', for example::
 
  environments:
    digitalocean:
