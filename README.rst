@@ -18,6 +18,9 @@ lego fashion at runtime into complex application topologies.
 You can find out more about juju at its home page. http://juju.ubuntu.com
 
 
+.. image:: https://travis-ci.org/kapilt/juju-digitalocean.svg?branch=master
+   :target: builds_
+
 Install
 =======
 
@@ -220,5 +223,6 @@ Additionally it supports the following provider specific constraints.
     instance montly cost (integer size in gigabytes).
 
 
+.. _builds: https://travis-ci.org/kapilt/juju-digitalocean/builds
 .. _here: https://www.digitalocean.com/?refcode=5df4b80c84c8
 .. _juju constraints: https://juju.ubuntu.com/docs/reference-constraints.html
