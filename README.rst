@@ -58,11 +58,16 @@ A digital ocean account is a pre-requisite, If you don't have a
 digital ocean account you can sign up `here`_.
 
 Credentials for the digital ocean api can be obtained from your account
-dashboard at https://cloud.digitalocean.com/api_access
+dashboard at https://cloud.digitalocean.com/settings/applications
 
-The credentials can be provided to the plugin via.
+The credentials can be provided to the plugin via:
 
-  - Environment variables DO_CLIENT_ID and DO_API_KEY
+- Environment variable DO_OAUTH_TOKEN
+
+If you're using an older version of juju-docean, it still accepts the
+digitalocean api v1 credentials via:
+
+- Environment variables DO_CLIENT_ID and DO_API_KEY
 
 This digital ocean plugin uses the manual provisioning capabilities of
 juju core. As a result its required to allocate machines in the
@@ -209,18 +214,18 @@ criteria.
 
 This plugin accepts the standard `juju constraints`_
 
-  - cpu-cores
-  - memory
-  - root-disk
+- cpu-cores
+- memory
+- root-disk
 
 Additionally it supports the following provider specific constraints.
 
-  - 'region' to denote the digital ocean data center to utilize. All digitalocean
-    data centers are supported and various short hand aliases are defined. ie. valid
-    values include ams2, nyc1, nyc2, sfo1, sg1. The plugin defaults to nyc2.
+- 'region' to denote the digital ocean data center to utilize. All digitalocean
+  data centers are supported and various short hand aliases are defined. ie. valid
+  values include ams2, nyc1, nyc2, sfo1, sg1. The plugin defaults to nyc3.
 
-  - 'transfer' to denote the terabytes of transfer included in the
-    instance montly cost (integer size in gigabytes).
+- 'transfer' to denote the terabytes of transfer included in the
+  instance montly cost (integer size in terabytes).
 
 
 .. _builds: https://travis-ci.org/kapilt/juju-digitalocean/builds

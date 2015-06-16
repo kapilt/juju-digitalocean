@@ -120,18 +120,23 @@ class ListMachines(BaseCommand):
                 header = None
 
             for r in constraints.REGIONS:
-                if m.region_id == r['id']:
+                if m.region_id == r.id:
                     break
             name = m.name
             if len(name) > 18:
                 name = name[:15] + "..."
+            size = constraints.SIZE_MAP.get(m.size_id)
+            if size is None:
+                size_name = "Unknown"
+            else:
+                size_name = getattr(size, 'name', "Unknown")
             print("{:<8} {:<18} {:<5} {:<8} {:<12} {:<6} {:<10}".format(
                 m.id,
                 name,
-                constraints.SIZE_MAP.get(m.size_id, {}).get('name', "Unknown"),
+                size_name,
                 m.status,
                 m.created_at[:-10],
-                r['aliases'][0],
+                r.slug,
                 m.ip_address).strip())
 
 

@@ -4,13 +4,16 @@ import time
 
 from juju_docean.exceptions import ConfigError, ProviderError
 from juju_docean.client import Client
+from juju_docean.constraints import init
 
 log = logging.getLogger("juju.docean")
 
 
 def factory():
     cfg = DigitalOcean.get_config()
-    return DigitalOcean(cfg)
+    ans = DigitalOcean(cfg)
+    init(ans.client)
+    return ans
 
 
 def validate():
@@ -22,9 +25,9 @@ class DigitalOcean(object):
     def __init__(self, config, client=None):
         self.config = config
         if client is None:
-            self.client = Client(
-                config['client_id'],
-                config['api_key'])
+            self.client = Client.connect(config)
+        else:
+            self.client = client
 
     @classmethod
     def get_config(cls):
@@ -32,25 +35,30 @@ class DigitalOcean(object):
 
         client_id = os.environ.get('DO_CLIENT_ID')
         if client_id:
-            provider_conf['client_id'] = client_id
+            provider_conf['DO_CLIENT_ID'] = client_id
 
         api_key = os.environ.get('DO_API_KEY')
         if api_key:
-            provider_conf['api_key'] = api_key
+            provider_conf['DO_API_KEY'] = api_key
+
+        oauth_token = os.environ.get('DO_OAUTH_TOKEN')
+        if oauth_token:
+            provider_conf['DO_OAUTH_TOKEN'] = oauth_token
 
         ssh_key = os.environ.get('DO_SSH_KEY')
         if ssh_key:
-            provider_conf['ssh_key'] = ssh_key
+            provider_conf['DO_SSH_KEY'] = ssh_key
 
-        if (not 'client_id' in provider_conf or
-                not 'api_key' in provider_conf):
+        if (not 'DO_CLIENT_ID' in provider_conf or
+                not 'DO_API_KEY' in provider_conf) and \
+           not 'DO_OAUTH_TOKEN' in provider_conf:
             raise ConfigError("Missing digital ocean api credentials")
         return provider_conf
 
     def get_ssh_keys(self):
         keys = self.client.get_ssh_keys()
-        if 'ssh_key' in self.config:
-            keys = [k for k in keys if k.name == self.config['ssh_key']]
+        if 'DO_SSH_KEY' in self.config:
+            keys = [k for k in keys if k.name == self.config['DO_SSH_KEY']]
         log.debug("Using DO ssh keys: %s" % (", ".join(k.name for k in keys)))
         return keys
 
@@ -79,20 +87,12 @@ class DigitalOcean(object):
         loop_count = 0
         while 1:
             time.sleep(8)  # Takes on average 1m for a do instance.
-            result = self.client.request("/events/%s" % event)
-            event_data = result['event']
-            if not event_data['event_type_id'] == event_type:
-                raise ValueError(
-                    "Waiting on invalid event type: %d for %s",
-                    event_data['event_type_id'], name)
-            elif event_data['action_status'] == 'done':
+            done, result = self.client.create_done(event, name)
+            if done:
                 log.debug("Instance %s ready", name)
                 return
-            elif result['status'] != "OK":
-                log.warning("Unknown provider error %s", result)
             else:
-                log.debug("Waiting on instance %s %s%%",
-                          name, event_data.get('percentage') or '0')
+                log.debug("Waiting on instance %s", name)
             if loop_count > 8:
                 # Its taking a long while (2m+), give the user some
                 # diagnostics if in debug mode.
