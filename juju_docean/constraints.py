@@ -68,30 +68,31 @@ def parse_constraints(constraints):
     if unknown:
         raise ConstraintError("Unknown constraints %s" % (" ".join(unknown)))
 
+    c_out = {}
     if 'mem' in c:
         q = converted_size(c['mem'])
         if q is None:
             raise ConstraintError("Invalid memory size %s" % c['mem'])
-        c['memory'] = q
+        c_out['memory'] = q
 
     if 'root-disk' in c:
         d = c.pop('root-disk')
         q = converted_size(d)
         if q is None:
             raise ConstraintError("Unknown root disk size %s" % d)
-        c['disk'] = q
+        c_out['disk'] = q
 
     if 'transfer' in c:
         d = c.pop('transfer')
         if not d.isdigit():
             raise ConstraintError("Unknown transfer size %s" % d)
-        c['transfer'] = int(d)
+        c_out['transfer'] = int(d)
 
     if 'cpu-cores' in c:
         d = c.pop('cpu-cores')
         if not d.isdigit():
             raise ConstraintError("Unknown cpu-cores size %s" % d)
-        c['cpus'] = int(d)
+        c_out['cpus'] = int(d)
 
     if 'arch' in c:
         d = c.pop('arch')
@@ -100,15 +101,15 @@ def parse_constraints(constraints):
 
     if 'region' in c:
         for r in REGIONS:
-            if c['region'] == r['name']:
-                c['region'] = r['id']
+            if c['region'] == r.name:
+                c_out['region'] = r.id
                 break
-            elif c['region'] == r['slug']:
-                c['region'] = r['id']
+            elif c['region'] == r.slug:
+                c_out['region'] = r.id
                 break
         else:
             raise ConstraintError("Unknown region %s" % c['region'])
-    return c
+    return c_out
 
 
 def solve_constraints(constraints):
