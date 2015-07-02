@@ -11,7 +11,11 @@ class Entity(object):
     def from_dict(cls, data):
         i = cls()
         i.__dict__.update(data)
+        i.json_keys = data.keys()
         return i
+
+    def to_json(self):
+        return dict([(k, getattr(self, k)) for k in self.json_keys])
 
 
 class SSHKey(Entity):

@@ -23,8 +23,15 @@ SUFFIX_SIZES = {
     "p": 1024 * 1024 * 1024}
 
 
-def init(client):
+def init(client, data=None):
     global SIZE_MAP, SIZES_SORTED, REGIONS, DEFAULT_REGION
+
+    if data is not None:
+        SIZE_MAP = data['sizes']
+        SIZES_SORTED = tuple(sorted(
+            SIZE_MAP.keys(), key=lambda id: SIZE_MAP[id].price))
+        REGIONS = data['regions']
+        return
 
     # Record sizes so we can offer constraints around disk, cpu and transfer.
     SIZE_MAP = dict((size.id, size) for size in client.get_sizes())
@@ -45,6 +52,13 @@ def init(client):
     else:
         raise ValueError("Could not find region 'nyc3'")
 
+    import json
+    print
+    print json.dumps({
+        'sizes': dict([(k, v.to_json()) for k, v in SIZE_MAP.items()]),
+        'regions': [v.to_json() for v in REGIONS]}, indent=2)
+    print
+    json.dumps
 
 def converted_size(s):
     q = s[-1].lower()

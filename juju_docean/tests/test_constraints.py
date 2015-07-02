@@ -1,6 +1,9 @@
+import json
+import os
+
 from base import Base
 
-from juju_docean.client import Client
+from juju_docean.client import Region, Size
 from juju_docean.constraints import solve_constraints, init
 
 
@@ -14,7 +17,13 @@ class ConstraintTests(Base):
         ("", ("512mb", 'nyc3'))]
 
     def setUp(self):
-        init(Client.connect())
+        data_path = os.path.join(os.path.dirname(__file__), 'constraints.json')
+        with open(data_path) as fh:
+            data = json.loads(fh.read())
+            data['sizes'] = dict(
+                [(k, Size.from_dict(v)) for k, v in data['sizes'].items()])
+            data['regions'] = map(Region.from_dict, data['regions'])
+            init(None, data=data)
 
     def test_constraint_solving(self):
         for constraints, solution in self.cases:
