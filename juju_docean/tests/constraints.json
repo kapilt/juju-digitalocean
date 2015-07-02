@@ -1,0 +1,396 @@
+{
+  "regions": [
+    {
+      "id": "nyc1", 
+      "slug": "nyc1", 
+      "features": [
+        "backups", 
+        "metadata"
+      ], 
+      "name": "New York 1", 
+      "sizes": [
+        "32gb", 
+        "16gb", 
+        "2gb", 
+        "1gb", 
+        "4gb", 
+        "8gb", 
+        "512mb", 
+        "64gb", 
+        "48gb"
+      ]
+    }, 
+    {
+      "id": "sfo1", 
+      "slug": "sfo1", 
+      "features": [
+        "private_networking", 
+        "backups", 
+        "ipv6", 
+        "metadata"
+      ], 
+      "name": "San Francisco 1", 
+      "sizes": [
+        "32gb", 
+        "16gb", 
+        "2gb", 
+        "1gb", 
+        "4gb", 
+        "8gb", 
+        "512mb", 
+        "64gb", 
+        "48gb"
+      ]
+    }, 
+    {
+      "id": "nyc2", 
+      "slug": "nyc2", 
+      "features": [
+        "private_networking", 
+        "backups", 
+        "metadata"
+      ], 
+      "name": "New York 2", 
+      "sizes": [
+        "32gb", 
+        "16gb", 
+        "2gb", 
+        "1gb", 
+        "4gb", 
+        "8gb", 
+        "512mb", 
+        "64gb", 
+        "48gb"
+      ]
+    }, 
+    {
+      "id": "ams2", 
+      "slug": "ams2", 
+      "features": [
+        "private_networking", 
+        "backups", 
+        "ipv6", 
+        "metadata"
+      ], 
+      "name": "Amsterdam 2", 
+      "sizes": [
+        "32gb", 
+        "16gb", 
+        "2gb", 
+        "1gb", 
+        "4gb", 
+        "8gb", 
+        "512mb", 
+        "64gb", 
+        "48gb"
+      ]
+    }, 
+    {
+      "id": "sgp1", 
+      "slug": "sgp1", 
+      "features": [
+        "private_networking", 
+        "backups", 
+        "ipv6", 
+        "metadata"
+      ], 
+      "name": "Singapore 1", 
+      "sizes": [
+        "32gb", 
+        "16gb", 
+        "2gb", 
+        "1gb", 
+        "4gb", 
+        "8gb", 
+        "512mb", 
+        "64gb", 
+        "48gb"
+      ]
+    }, 
+    {
+      "id": "lon1", 
+      "slug": "lon1", 
+      "features": [
+        "private_networking", 
+        "backups", 
+        "ipv6", 
+        "metadata"
+      ], 
+      "name": "London 1", 
+      "sizes": [
+        "32gb", 
+        "16gb", 
+        "2gb", 
+        "1gb", 
+        "4gb", 
+        "8gb", 
+        "512mb", 
+        "64gb", 
+        "48gb"
+      ]
+    }, 
+    {
+      "id": "nyc3", 
+      "slug": "nyc3", 
+      "features": [
+        "private_networking", 
+        "backups", 
+        "ipv6", 
+        "metadata"
+      ], 
+      "name": "New York 3", 
+      "sizes": [
+        "32gb", 
+        "16gb", 
+        "2gb", 
+        "1gb", 
+        "4gb", 
+        "8gb", 
+        "512mb", 
+        "64gb", 
+        "48gb"
+      ]
+    }, 
+    {
+      "id": "ams3", 
+      "slug": "ams3", 
+      "features": [
+        "private_networking", 
+        "backups", 
+        "ipv6", 
+        "metadata"
+      ], 
+      "name": "Amsterdam 3", 
+      "sizes": [
+        "32gb", 
+        "16gb", 
+        "2gb", 
+        "1gb", 
+        "4gb", 
+        "8gb", 
+        "512mb", 
+        "64gb", 
+        "48gb"
+      ]
+    }, 
+    {
+      "id": "fra1", 
+      "slug": "fra1", 
+      "features": [
+        "private_networking", 
+        "backups", 
+        "ipv6", 
+        "metadata"
+      ], 
+      "name": "Frankfurt 1", 
+      "sizes": [
+        "32gb", 
+        "16gb", 
+        "2gb", 
+        "1gb", 
+        "4gb", 
+        "8gb", 
+        "512mb", 
+        "64gb", 
+        "48gb"
+      ]
+    }
+  ], 
+  "sizes": {
+    "48gb": {
+      "name": "48gb", 
+      "transfer": 8.0, 
+      "price": 480.0, 
+      "cpus": 16, 
+      "id": "48gb", 
+      "regions": [
+        "sgp1", 
+        "nyc1", 
+        "lon1", 
+        "nyc2", 
+        "ams3", 
+        "nyc3", 
+        "ams2", 
+        "sfo1", 
+        "fra1"
+      ], 
+      "memory": 49152, 
+      "disk": 491520, 
+      "slug": "48gb"
+    }, 
+    "512mb": {
+      "name": "512mb", 
+      "transfer": 1.0, 
+      "price": 5.0, 
+      "cpus": 1, 
+      "id": "512mb", 
+      "regions": [
+        "nyc1", 
+        "sgp1", 
+        "ams1", 
+        "sfo1", 
+        "nyc2", 
+        "lon1", 
+        "nyc3", 
+        "ams3", 
+        "ams2", 
+        "fra1"
+      ], 
+      "memory": 512, 
+      "disk": 20480, 
+      "slug": "512mb"
+    }, 
+    "64gb": {
+      "name": "64gb", 
+      "transfer": 9.0, 
+      "price": 640.0, 
+      "cpus": 20, 
+      "id": "64gb", 
+      "regions": [
+        "sgp1", 
+        "nyc1", 
+        "nyc2", 
+        "lon1", 
+        "ams3", 
+        "nyc3", 
+        "ams2", 
+        "sfo1", 
+        "fra1"
+      ], 
+      "memory": 65536, 
+      "disk": 655360, 
+      "slug": "64gb"
+    }, 
+    "8gb": {
+      "name": "8gb", 
+      "transfer": 5.0, 
+      "price": 80.0, 
+      "cpus": 4, 
+      "id": "8gb", 
+      "regions": [
+        "nyc2", 
+        "sgp1", 
+        "ams1", 
+        "nyc1", 
+        "lon1", 
+        "nyc3", 
+        "ams3", 
+        "ams2", 
+        "sfo1", 
+        "fra1"
+      ], 
+      "memory": 8192, 
+      "disk": 81920, 
+      "slug": "8gb"
+    }, 
+    "4gb": {
+      "name": "4gb", 
+      "transfer": 4.0, 
+      "price": 40.0, 
+      "cpus": 2, 
+      "id": "4gb", 
+      "regions": [
+        "nyc2", 
+        "ams1", 
+        "sgp1", 
+        "lon1", 
+        "nyc3", 
+        "ams3", 
+        "nyc1", 
+        "ams2", 
+        "sfo1", 
+        "fra1"
+      ], 
+      "memory": 4096, 
+      "disk": 61440, 
+      "slug": "4gb"
+    }, 
+    "2gb": {
+      "name": "2gb", 
+      "transfer": 3.0, 
+      "price": 20.0, 
+      "cpus": 2, 
+      "id": "2gb", 
+      "regions": [
+        "nyc2", 
+        "sfo1", 
+        "ams1", 
+        "sgp1", 
+        "lon1", 
+        "nyc3", 
+        "ams3", 
+        "nyc1", 
+        "ams2", 
+        "fra1"
+      ], 
+      "memory": 2048, 
+      "disk": 40960, 
+      "slug": "2gb"
+    }, 
+    "32gb": {
+      "name": "32gb", 
+      "transfer": 7.0, 
+      "price": 320.0, 
+      "cpus": 12, 
+      "id": "32gb", 
+      "regions": [
+        "nyc2", 
+        "sgp1", 
+        "nyc1", 
+        "lon1", 
+        "ams3", 
+        "nyc3", 
+        "ams2", 
+        "sfo1", 
+        "fra1"
+      ], 
+      "memory": 32768, 
+      "disk": 327680, 
+      "slug": "32gb"
+    }, 
+    "1gb": {
+      "name": "1gb", 
+      "transfer": 2.0, 
+      "price": 10.0, 
+      "cpus": 1, 
+      "id": "1gb", 
+      "regions": [
+        "nyc2", 
+        "sgp1", 
+        "ams1", 
+        "sfo1", 
+        "lon1", 
+        "nyc3", 
+        "ams3", 
+        "nyc1", 
+        "ams2", 
+        "fra1"
+      ], 
+      "memory": 1024, 
+      "disk": 30720, 
+      "slug": "1gb"
+    }, 
+    "16gb": {
+      "name": "16gb", 
+      "transfer": 6.0, 
+      "price": 160.0, 
+      "cpus": 8, 
+      "id": "16gb", 
+      "regions": [
+        "sgp1", 
+        "nyc1", 
+        "nyc3", 
+        "lon1", 
+        "nyc2", 
+        "ams1", 
+        "ams3", 
+        "ams2", 
+        "sfo1", 
+        "fra1"
+      ], 
+      "memory": 16384, 
+      "disk": 163840, 
+      "slug": "16gb"
+    }
+  }
+}
