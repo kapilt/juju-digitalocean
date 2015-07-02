@@ -231,3 +231,16 @@ Additionally it supports the following provider specific constraints.
 .. _builds: https://travis-ci.org/kapilt/juju-digitalocean/builds
 .. _here: https://www.digitalocean.com/?refcode=5df4b80c84c8
 .. _juju constraints: https://juju.ubuntu.com/docs/reference-constraints.html
+
+
+Contributing
+============
+
+Bug reports and pull requests welcome.
+
+
+Contributors
+------------
+- Kapil Thangavelu - Maintainer
+
+- Bruce Frederiksen - DO v2 Support

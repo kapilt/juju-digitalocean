@@ -1,5 +1,10 @@
 from juju_docean.exceptions import ConstraintError
 
+DEFAULT_REGION = 'nyc3'
+REGIONS = ()
+SIZES_SORTED = ('512mb',)
+SIZE_MAP = {'512mb': {}}
+
 # Would be nice to use ubuntu-distro-info, but portability.
 SERIES_MAP = {
     '12-04': 'precise',
@@ -23,7 +28,6 @@ def init(client):
 
     # Record sizes so we can offer constraints around disk, cpu and transfer.
     SIZE_MAP = dict((size.id, size) for size in client.get_sizes())
-
     # Resize disks to mb (silly default in juju-core)
     for s in SIZE_MAP.values():
         s.disk *= 1024

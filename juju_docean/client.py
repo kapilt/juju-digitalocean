@@ -78,22 +78,23 @@ class Client(object):
 
     @classmethod
     def connect(cls, config=os.environ):
+        oauth_token = config.get('DO_OAUTH_TOKEN')
+        if oauth_token:
+            return Client_v2(oauth_token)
         client_id = config.get('DO_CLIENT_ID')
         key = config.get('DO_API_KEY')
         if client_id or key:
             if not client_id or not key:
                 raise KeyError("Missing api credentials")
             return Client_v1(client_id, key)
-        oauth_token = config.get('DO_OAUTH_TOKEN')
-        if not oauth_token:
+        else:
             raise KeyError("Missing api credentials")
-        return Client_v2(oauth_token)
 
 
 class Client_v1(Client):
-    Transfers_for_sizes = {'512mb': 1, '1gb': 2, '2gb': 3, '4gb': 4, '8gb': 5,
-                           '16gb': 6, '32gb': 7, '48gb': 8, '64gb': 9, 
-                          }
+    Transfers_for_sizes = {
+        '512mb': 1, '1gb': 2, '2gb': 3, '4gb': 4, '8gb': 5,
+        '16gb': 6, '32gb': 7, '48gb': 8, '64gb': 9}
 
     def __init__(self, client_id, api_key):
         self.client_id = client_id
@@ -106,24 +107,24 @@ class Client_v1(Client):
 
     def make_image(self, info):
         return Image.from_dict(
-                 dict(id=info['id'], slug=info['slug'], name=info['name'],
-                      distribution=info['distribution'], public=info['public'],
-                      regions=info['region_slugs']))
+            dict(id=info['id'], slug=info['slug'], name=info['name'],
+                 distribution=info['distribution'], public=info['public'],
+                 regions=info['region_slugs']))
 
     def make_region(self, info):
         return Region.from_dict(
-                 dict(id=info['id'], name=info['name'], slug=info['slug']))
+            dict(id=info['id'], name=info['name'], slug=info['slug']))
 
     def make_size(self, info):
         return Size.from_dict(
-                 dict(id=info['id'], name=info['name'], slug=info['slug'],
-                      memory=info['memory'],
-                      cpus=info['cpu'], disk=info['disk'],
-                      transfer=self.Transfers_for_sizes[info['slug']],
-                      price=float(info['cost_per_month'])))
+            dict(id=info['id'], name=info['name'], slug=info['slug'],
+                 memory=info['memory'],
+                 cpus=info['cpu'], disk=info['disk'],
+                 transfer=self.Transfers_for_sizes[info['slug']],
+                 price=float(info['cost_per_month'])))
 
     def make_droplet(self, info):
-        attributes = dict(id=info['id'], name=info['name'], 
+        attributes = dict(id=info['id'], name=info['name'],
                           image_id=info['image_id'], size_id=info['size_id'])
         for name in ('event_id', 'ip_address', 'created_at', 'status',
                      'region_id', 'event_id'):
@@ -151,7 +152,7 @@ class Client_v1(Client):
         event = data.get('event', {})
         if event.get('event_type_id', 1) != 1:
             raise ValueError("Waiting on invalid event type: %d for %s" %
-                               (event['event_type_id'], name))
+                             (event['event_type_id'], name))
         return event.get('action_status') == 'done', data
 
     def destroy_droplet(self, droplet_id, scrub=True):
@@ -197,32 +198,32 @@ class Client_v2(Client):
 
     def make_ssh_key(self, info):
         return SSHKey.from_dict(
-                 dict(id=info['id'], name=info['name']))
+            dict(id=info['id'], name=info['name']))
 
     def make_image(self, info):
         return Image.from_dict(
-                 dict(id=info['id'], slug=info['slug'], name=info['name'],
-                      distribution=info['distribution'], public=info['public'],
-                      regions=info['regions']))
+            dict(id=info['id'], slug=info['slug'], name=info['name'],
+                 distribution=info['distribution'], public=info['public'],
+                 regions=info['regions']))
 
     def make_region(self, info):
         if info['available']:
             return Region.from_dict(
-                     dict(id=info['slug'], name=info['name'], slug=info['slug'],
-                          sizes=info['sizes'], features=info['features']))
+                dict(id=info['slug'], name=info['name'], slug=info['slug'],
+                     sizes=info['sizes'], features=info['features']))
 
     def make_size(self, info):
         if info['available']:
             return Size.from_dict(
-                     dict(id=info['slug'], name=info['slug'], slug=info['slug'],
-                          memory=info['memory'],
-                          cpus=info['vcpus'], disk=info['disk'],
-                          transfer=info['transfer'],
-                          price=info['price_monthly'],
-                          regions=info['regions']))
+                dict(id=info['slug'], name=info['slug'], slug=info['slug'],
+                     memory=info['memory'],
+                     cpus=info['vcpus'], disk=info['disk'],
+                     transfer=info['transfer'],
+                     price=info['price_monthly'],
+                     regions=info['regions']))
 
     def make_droplet(self, info):
-        attributes = dict(id=info['id'], name=info['name'], 
+        attributes = dict(id=info['id'], name=info['name'],
                           status=info['status'], size_id=info['size_slug'],
                           created_at=info['created_at'])
         if 'v4' in info['networks']:
@@ -258,7 +259,7 @@ class Client_v2(Client):
         event = data.get('action', {})
         if event.get('type', 'create') != 'create':
             raise ValueError("Waiting on invalid action type: %s for %s" %
-                               (event['type'], name))
+                             (event['type'], name))
         completed = event.get('status') == 'completed'
         return completed, event
 
