@@ -53,6 +53,14 @@ def init(client, data=None):
         raise ValueError("Could not find region 'nyc3'")
 
 
+def size_to_resources(size_id):
+    size = SIZE_MAP[size_id]
+    return {'Mem': size.memory,
+            'CpuCores': size.cpus,
+            'Arch': 'amd64',
+            'RootDisk': size.disk}
+
+
 def converted_size(s):
     q = s[-1].lower()
     size_factor = SUFFIX_SIZES.get(q)

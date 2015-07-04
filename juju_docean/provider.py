@@ -29,6 +29,10 @@ class DigitalOcean(object):
         else:
             self.client = client
 
+    @property
+    def version(self):
+        return self.client.version
+
     @classmethod
     def get_config(cls):
         provider_conf = {}

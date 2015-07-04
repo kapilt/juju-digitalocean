@@ -1,9 +1,12 @@
 import logging
-import time
 import subprocess
+import time
+import uuid
 
-from juju_docean.exceptions import TimeoutError
-from juju_docean import ssh
+
+from juju_docean.exceptions import TimeoutError, ProviderAPIError
+from juju_docean import ssh, constraints
+
 
 log = logging.getLogger("juju.docean")
 
@@ -19,6 +22,25 @@ class MachineOp(object):
 
     def run(self):
         raise NotImplementedError()
+
+
+class MachineUserDataRegister(MachineOp):
+
+    def run(self):
+        client = self.env.connect()
+        nonce = "manual:%s" % uuid.uuid4().get_hex()
+        result = client.register_machine(
+            self.params['name'],
+            nonce,
+            series=self.options['series'],
+            hardware=constraints.size_to_resources(self.params['size_id']),
+            addrs=[])
+        script = client.provisioning_script(result['Machine'], nonce)
+        self.params['user_data'] = "#!/bin/bash\n%s" % script['Script']
+        instance = self.provider.launch_instance(self.params)
+        instance.machine_id = result['Machine']
+        client.close()
+        return instance
 
 
 class MachineAdd(MachineOp):
@@ -91,4 +113,16 @@ class MachineDestroy(MachineOp):
         if self.options.get('env_only'):
             return
         log.debug("Destroying instance %s", self.params['instance_id'])
-        self.provider.terminate_instance(self.params['instance_id'])
+        while True:
+            try:
+                self.provider.terminate_instance(self.params['instance_id'])
+                break
+            except ProviderAPIError, e:
+                # The vm has a pending event, sleep and try again.
+                if e.message['id'] == 'unprocessable_entity':
+                    log.debug(
+                        "Waiting for pending instance action to complete.")
+                    time.sleep(6)
+                    continue
+                raise
+            break
