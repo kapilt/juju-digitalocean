@@ -52,13 +52,6 @@ def init(client, data=None):
     else:
         raise ValueError("Could not find region 'nyc3'")
 
-    import json
-    print
-    print json.dumps({
-        'sizes': dict([(k, v.to_json()) for k, v in SIZE_MAP.items()]),
-        'regions': [v.to_json() for v in REGIONS]}, indent=2)
-    print
-    json.dumps
 
 def converted_size(s):
     q = s[-1].lower()
