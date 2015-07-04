@@ -13,7 +13,7 @@ setup(name='juju-docean',
       url='https://github.com/kapilt/juju-digitalocean',
       license='BSD',
       packages=find_packages(),
-      install_requires=["PyYAML", "requests"],
+      install_requires=["PyYAML", "requests", "jujuclient"],
       tests_require=["nose", "mock"],
       entry_points={
           "console_scripts": [

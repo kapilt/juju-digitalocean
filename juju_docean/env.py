@@ -9,10 +9,13 @@ import yaml
 
 log = logging.getLogger("juju.docean")
 
+from jujuclient import Environment as Client
 from juju_docean.constraints import SERIES_MAP
 
 
 class Environment(object):
+
+    _client = None
 
     def __init__(self, config):
         self.config = config
@@ -35,6 +38,16 @@ class Environment(object):
                 "Failed to run command %s\n%s",
                 ' '.join(args), e.output)
             raise
+
+    def connect(self):
+        # TODO TLS Conn Cache, underlying socket supports async, but client lib
+        # we're using is synchronous based.
+        return Client.connect(self.config.get_env_name())
+
+    def close(self):
+        if self._client:
+            self._client.close()
+            self._client = None
 
     def status(self):
         return yaml.safe_load(self._run(['status']))

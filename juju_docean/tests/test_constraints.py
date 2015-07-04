@@ -4,7 +4,8 @@ import os
 from base import Base
 
 from juju_docean.client import Region, Size
-from juju_docean.constraints import solve_constraints, init
+from juju_docean.constraints import (
+    solve_constraints, size_to_resources, init)
 
 
 class ConstraintTests(Base):
@@ -30,3 +31,11 @@ class ConstraintTests(Base):
             self.assertEqual(
                 solve_constraints(constraints),
                 solution)
+
+    def test_sizes_to_resource(self):
+        self.assertEqual(
+            size_to_resources('1gb'),
+            {'Mem': 1024,
+             'CpuCores': 1,
+             'Arch': 'amd64',
+             'RootDisk': 30720})

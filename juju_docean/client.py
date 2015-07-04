@@ -96,6 +96,9 @@ class Client(object):
 
 
 class Client_v1(Client):
+
+    version = 1.0
+
     Transfers_for_sizes = {
         '512mb': 1, '1gb': 2, '2gb': 3, '4gb': 4, '8gb': 5,
         '16gb': 6, '32gb': 7, '48gb': 8, '64gb': 9}
@@ -192,6 +195,8 @@ class Client_v1(Client):
 
 class Client_v2(Client):
 
+    version = 2.0
+
     def __init__(self, oauth_token):
         self.oauth_token = oauth_token
         self.api_url_base = 'https://api.digitalocean.com/v2'
@@ -243,15 +248,18 @@ class Client_v2(Client):
 
     def create_droplet(self, name, size_id, image_id, region_id,
                        ssh_key_ids=None, private_networking=False,
-                       backups_enabled=False, virtio=True):
+                       backups_enabled=False, virtio=True, user_data=None):
         params = dict(
             name=name, size=size_id,
             image=image_id, region=region_id,
             private_networking=bool(private_networking),
             backups=bool(backups_enabled))
 
+        if user_data:
+            params['user_data'] = user_data
         if ssh_key_ids:
             params['ssh_keys'] = ssh_key_ids
+
         data = self.request('/droplets', 'POST', data=params)
         ans = self.make_droplet(data.get('droplet', {}))
         for action in data.get('links', {}).get('actions', []):

@@ -150,18 +150,28 @@ class AddMachine(BaseCommand):
         template = dict(
             image_id=image, size_id=size, region_id=region, ssh_key_ids=keys)
 
+        op_class = self.provider.version == 2.0 and \
+            ops.MachineUserDataRegister or ops.MachineRegister
+
         for n in range(self.config.num_machines):
             params = dict(template)
             params['name'] = "%s-%s" % (
                 self.config.get_env_name(), uuid.uuid4().hex)
+
             self.runner.queue_op(
-                ops.MachineRegister(
-                    self.provider, self.env, params, series=self.config.series,
+                op_class(
+                    self.provider, self.env, params,
+                    series=self.config.series,
                     key=self.config.options.ssh_key))
 
-        for (instance, machine_id) in self.runner.iter_results():
-            log.info("Registered id:%s name:%s ip:%s as juju machine",
-                     instance.id, instance.name, instance.ip_address)
+        for instance in self.runner.iter_results():
+
+            if getattr(instance, 'ip_address', None):
+                info = "ip:%s" % instance.ip_address
+            else:
+                info = "mid: %s" % instance.machine_id
+            log.info("Registered id:%s name:%s %s as juju machine",
+                     instance.id, instance.name, info)
 
 
 class TerminateMachine(BaseCommand):
@@ -170,20 +180,27 @@ class TerminateMachine(BaseCommand):
         """Terminate machine in environment.
         """
         self.check_preconditions()
-        self._terminate_machines(lambda x: x in self.config.options.machines)
+        self._terminate_machines()
 
-    def _terminate_machines(self, machine_filter):
-        log.debug("Checking for machines to terminate")
+    def _machine_filter(self, mid, m):
+        return any([
+            spec == mid for spec in
+            self.config.options.machines if mid != '0'])
+
+    def _terminate_machines(self, machine_filter=None):
+        log.debug("Checking for machines to terminate %s", self.config.options.machines)
         status = self.env.status()
         machines = status.get('machines', {})
 
+        machine_filter = machine_filter or self._machine_filter
         # Using the api instance-id can be the provider id, but
         # else it defaults to ip, and we have to disambiguate.
         remove = []
         for m in machines:
-            if machine_filter(m):
+            if machine_filter(m, machines[m]):
+                log.debug("Removing machine %s:%s" % (m, machines[m]))
                 remove.append(
-                    {'address': machines[m]['dns-name'],
+                    {'address': machines[m].get('dns-name'),
                      'instance_id': machines[m]['instance-id'],
                      'machine_id': m})
 
@@ -196,7 +213,16 @@ class TerminateMachine(BaseCommand):
                  " ".join([m['machine_id'] for m in remove]))
 
         for m in remove:
-            instance = address_map.get(m['address'])
+            instance = None
+            if m['address']:
+                instance = address_map.get(m['address'])
+            else:
+                instances = [
+                    i for i in address_map.values()
+                    if m['instance_id'] == i.name]
+                if len(instances) == 1:
+                    instance = instances[0]
+                    #instances['instance'] =
             env_only = False  # Remove from only env or also provider.
             if instance is None:
                 log.warning(
@@ -230,8 +256,8 @@ class DestroyEnvironment(TerminateMachine):
         force = self.config.options.force
 
         # Manual provider needs machines removed prior to env destroy.
-        def state_service_filter(m):
-            if m == "0":
+        def state_service_filter(mid, m):
+            if mid == "0":
                 return False
             return True
 
