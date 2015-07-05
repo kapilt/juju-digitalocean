@@ -165,7 +165,9 @@ class AddMachine(BaseCommand):
                     key=self.config.options.ssh_key))
 
         for instance in self.runner.iter_results():
-
+            # V1 legacy support / TODO Remove 10/2015
+            if isinstance(instance, tuple):
+                instance, id = instance
             if getattr(instance, 'ip_address', None):
                 info = "ip:%s" % instance.ip_address
             else:
@@ -188,7 +190,6 @@ class TerminateMachine(BaseCommand):
             self.config.options.machines if mid != '0'])
 
     def _terminate_machines(self, machine_filter=None):
-        log.debug("Checking for machines to terminate %s", self.config.options.machines)
         status = self.env.status()
         machines = status.get('machines', {})
 
@@ -198,7 +199,6 @@ class TerminateMachine(BaseCommand):
         remove = []
         for m in machines:
             if machine_filter(m, machines[m]):
-                log.debug("Removing machine %s:%s" % (m, machines[m]))
                 remove.append(
                     {'address': machines[m].get('dns-name'),
                      'instance_id': machines[m]['instance-id'],

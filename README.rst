@@ -80,8 +80,8 @@ SSH Key
 An ssh key is required for use by this plugin and the public key
 must be uploaded to the digital ocean control panel. By default
 all keys in the digital ocean account will be tried, so no user
-configuration is needed. A specific key to utilize can be specified with 
-the environment variable DO_SSH_KEY="key_name" where key_name is the name of 
+configuration is needed. A specific key to utilize can be specified with
+the environment variable DO_SSH_KEY="key_name" where key_name is the name of
 the key in the digital ocean management console.
 
 
@@ -170,14 +170,14 @@ these workloads together via relations like lego blocks::
 
   $ juju add-relation wordpress mysql
 
-We can list all machines in digitalocean that are part of the juju 
-environment with the list-machines command. This directly queries the digital 
-ocean api and does not interact with juju api. It also takes a --all option to 
+We can list all machines in digitalocean that are part of the juju
+environment with the list-machines command. This directly queries the digital
+ocean api and does not interact with juju api. It also takes a --all option to
 list all machines in digitalocean account (irrespective of environment).::
 
   $ juju docean list-machines
 
-  Id       Name               Size  Status   Created      Region Address   
+  Id       Name               Size  Status   Created      Region Address
   2442349  ocean-0            512MB active   2014-08-25   nyc2   162.243.123.121
   2442360  ocean-ef19ad5cc... 512MB active   2014-08-25   nyc2   162.243.51.21
   2442361  ocean-145bf7a80... 512MB active   2014-08-25   nyc2   104.131.201.155
@@ -195,7 +195,7 @@ And we can destroy the entire environment via::
   $ juju docean destroy-environment
 
 destroy-environment also takes a --force option which only uses the
-digital ocean api. Its helpful if state server or other machines are 
+digital ocean api. Its helpful if state server or other machines are
 killed independently of juju.
 
 All commands have builtin help facilities and accept a -v option which will
