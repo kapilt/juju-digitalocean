@@ -4,7 +4,7 @@ setup(name='juju-docean',
       version="0.6.0",
       classifiers=[
           'Intended Audience :: Developers',
-          'Programming Language :: Python',
+          'Programming Language :: Python :: 2 :: Only',
           'Operating System :: OS Independent'],
       author='Kapil Thangavelu',
       author_email='kapil.foss@gmail.com',
